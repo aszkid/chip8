@@ -139,16 +139,10 @@ impl Chip {
                                     0x4 => {
                                           let rx = ((instruction & 0x0F00) >> 8) as usize;
                                           let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let res: u16 = self.load(rx) as u16 + self.load(ry) as u16;                                          let carry = ((res & 0xFF00) >> 8) as u8;
-                                          let val = (res & 0x00FF) as u8;
-                                          
-                                          if carry > 0 {
-                                                self.store(rx, (res % 256) as u8);
-                                                self.store(0xF, 1);
-                                          } else {
-                                                self.store(rx, val);
-                                                self.store(0xF, 0);
-                                          }
+                                          let (val, carry) = add_carry(self.load(rx), self.load(ry));
+
+                                          self.store(rx, val);
+                                          self.store(0xF, carry);
                                     },
                                     _ => println!("Instruction {:x} unimplemented", instruction)
                               }
