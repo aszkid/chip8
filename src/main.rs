@@ -22,7 +22,8 @@ struct Chip {
       stack: [u16; STACK_SIZE],
       stack_pointer: u8,
       program_counter: u16,
-      rom: String
+      rom: String,
+      index: u16
 }
 
 impl Chip {
@@ -34,7 +35,8 @@ impl Chip {
                   stack: [0; STACK_SIZE],
                   stack_pointer: 0,
                   program_counter: PROGRAM_BASE,
-                  rom: String::from("")
+                  rom: String::from(""),
+                  index: 0
             }
       }
 
@@ -72,6 +74,7 @@ impl Chip {
                         },
                         0x1000 => {
                               let addr = instruction & 0x0FFF;
+                              self.program_counter = addr;
                               println!("Jump to physical address {:x}", addr);
                         },
                         0x2000 => {
@@ -92,6 +95,7 @@ impl Chip {
                         0x9000 => println!("Skip neq reg"),
                         0xA000 => {
                               let addr = instruction & 0x0FFF;
+                              self.index = addr;
                               println!("Store addr. {:x} in register I", addr);
                         },
                         0xB000 => println!("Jump addr"),
@@ -100,7 +104,7 @@ impl Chip {
                               let reg_x = (instruction & 0x0F00) >> 8;
                               let reg_y = (instruction & 0x00F0) >> 4;
                               let bytes = instruction & 0x000F;
-                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = ??", reg_x, reg_y, self.load(reg_x as usize), self.load(reg_y as usize), bytes);
+                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = {:x}", reg_x, reg_y, self.load(reg_x as usize), self.load(reg_y as usize), bytes, self.index);
                         },
                         0xE000 => println!("Skip key"),
                         0xF000 => {
@@ -147,6 +151,7 @@ impl Chip {
             self.stack = [0; STACK_SIZE];
             self.stack_pointer = 0;
             self.program_counter = PROGRAM_BASE;
+            self.index = 0;
       }
 
       fn load_rom(&mut self, rom: &str) {
