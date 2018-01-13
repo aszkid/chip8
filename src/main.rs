@@ -63,9 +63,21 @@ impl Chip {
 
             if instruction != 0 {
                   match instruction & 0xF000 {
-                        0x0000 => println!("Execute / clearscr / return"),
-                        0x1000 => println!("Jump"),
-                        0x2000 => println!("Execute"),
+                        0x0000 => {
+                              match instruction {
+                                    0x00E0 => println!("Clear screen"),
+                                    0x00EE => println!("Return"),
+                                    _ => println!("Execute machine language subroutine unsupported.")
+                              }
+                        },
+                        0x1000 => {
+                              let addr = instruction & 0x0FFF;
+                              println!("Jump to physical address {:x}", addr);
+                        },
+                        0x2000 => {
+                              let addr = instruction & 0x0FFF;
+                              println!("Execute subroutine at {:x}", addr);
+                        },
                         0x3000 => println!("Skip eq"),
                         0x4000 => println!("Skip neq"),
                         0x5000 => println!("Skip eq reg"),
@@ -73,16 +85,41 @@ impl Chip {
                               let reg = ((instruction & 0x0F00) >> 8) as usize;
                               let val = (instruction & 0x00FF) as u8;
                               self.store(reg, val);
+                              println!("Store {} in V{}", val, reg);
                         },
                         0x7000 => println!("Add"),
                         0x8000 => println!("Store / setlog / ops"),
                         0x9000 => println!("Skip neq reg"),
-                        0xA000 => println!("Store I"),
+                        0xA000 => {
+                              let addr = instruction & 0x0FFF;
+                              println!("Store addr. {:x} in register I", addr);
+                        },
                         0xB000 => println!("Jump addr"),
                         0xC000 => println!("Rnd"),
-                        0xD000 => println!("Draw"),
+                        0xD000 => {
+                              let reg_x = (instruction & 0x0F00) >> 8;
+                              let reg_y = (instruction & 0x00F0) >> 4;
+                              let bytes = instruction & 0x000F;
+                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = ??", reg_x, reg_y, self.load(reg_x as usize), self.load(reg_y as usize), bytes);
+                        },
                         0xE000 => println!("Skip key"),
-                        0xF000 => println!("Timer / bindec / etc"),
+                        0xF000 => {
+                              match instruction & 0x00FF {
+                                    0x000A => {
+                                          let reg = (instruction & 0x0F00) >> 8;
+                                          println!("Wait for keypress and store in V{}", reg);
+                                    },
+                                    0x0018 => {
+                                          let reg = (instruction & 0x0F00) >> 8;
+                                          println!("Set sound timer to value of V{} = {}", reg, self.load(reg as usize));
+                                    },
+                                    0x0029 => {
+                                          let reg = (instruction & 0x0F00) >> 8;
+                                          println!("Set I to sprite mem. address for digit in V{} = {}", reg, self.load(reg as usize));
+                                    },
+                                    _ => println!("Timer stuff")
+                              }
+                        },
                         _ => println!("dunno")
                   }
             }
@@ -98,6 +135,9 @@ impl Chip {
 
       fn store(&mut self, reg: usize, val: u8) {
             self.registers[reg] = val;
+      }
+      fn load(&mut self, reg: usize) -> u8 {
+            self.registers[reg]
       }
 
       fn reset(&mut self) {
@@ -129,9 +169,4 @@ fn main() {
 
       chip.load_rom("roms/helloworld.rom");
       chip.run();
-
-      println!("Registers:");
-      for val in &chip.registers {
-            println!("{}", val);
-      }
 }
