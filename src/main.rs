@@ -1,8 +1,10 @@
+extern crate rand;
+
 use std::time::Duration;
 use std::thread;
 use std::fs::File;
 use std::io::prelude::*;
-
+use rand::Rng;
 
 /**
 * http://mattmik.com/files/chip8/mastering/chip8.html
@@ -198,7 +200,12 @@ impl Chip {
                               println!("Store addr. {:x} in register I", addr);
                         },
                         0xB000 => println!("Jump addr"),
-                        0xC000 => println!("Rnd"),
+                        0xC000 => {
+                              let rx = ((instruction & 0x0F00) >> 8) as usize;
+                              let mask = (instruction & 0x00FF) as u8;
+
+                              self.store(rx, rand::random::<u8>() & mask);
+                        },
                         0xD000 => {
                               let rx = (instruction & 0x0F00) >> 8;
                               let ry = (instruction & 0x00F0) >> 4;
@@ -280,7 +287,7 @@ fn main() {
 
       let mut chip = Chip::new();
 
-      chip.load_rom("roms/shift.rom");
+      chip.load_rom("roms/rand.rom");
       chip.run();
       chip.dump();
 }
