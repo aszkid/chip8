@@ -62,12 +62,32 @@ impl Chip {
             instruction |= low;
 
             if instruction != 0 {
-                  println!("instruction: {:x} at {:x}", instruction, self.program_counter);
+                  print!("{:x} | ", instruction);
+                  match instruction & 0xF000 {
+                        0x0000 => println!("Execute / clearscr / return"),
+                        0x1000 => println!("Jump"),
+                        0x2000 => println!("Execute"),
+                        0x3000 => println!("Skip eq"),
+                        0x4000 => println!("Skip neq"),
+                        0x5000 => println!("Skip eq reg"),
+                        0x6000 => println!("Store"),
+                        0x7000 => println!("Add"),
+                        0x8000 => println!("Store / setlog / ops"),
+                        0x9000 => println!("Skip neq reg"),
+                        0xA000 => println!("Store I"),
+                        0xB000 => println!("Jump addr"),
+                        0xC000 => println!("Rnd"),
+                        0xD000 => println!("Draw"),
+                        0xE000 => println!("Skip key"),
+                        0xF000 => println!("Timer / bindec / etc"),
+                        _ => println!("dunno")
+                  }
             }
 
             if self.program_counter == 4094 {
                   println!("Finished memory!");
                   self.running = false;
+                  return
             }
 
             self.program_counter += 2;
