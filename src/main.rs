@@ -1,3 +1,6 @@
+use std::time::Duration;
+use std::thread;
+
 /**
 * http://mattmik.com/files/chip8/mastering/chip8.html
 * http://devernay.free.fr/hacks/chip8/C8TECH10.HTM
@@ -38,6 +41,18 @@ impl Chip {
             self.registers[0xF]
       }
 
+      fn run(&mut self) {
+            while self.running {
+                  self.cycle();
+                  // TODO; batch sleep for every X cycles to avoid calling `sleep` too many times
+                  thread::sleep(Duration::from_millis(2))
+            }
+      }
+      // private function, in theory
+      fn cycle(&mut self) {
+            println!("Cycling...");
+      }
+
       fn reset(&mut self) {
             self.memory = [0; MEMORY_SIZE];
             self.registers = [0; NUM_REGISTERS];
@@ -67,4 +82,6 @@ fn main() {
       println!("Program counter: {}", chip.program_counter);
       println!("Flag: {}", chip.get_flag());
       println!("ROM: {}", chip.rom);
+
+      chip.run();
 }
