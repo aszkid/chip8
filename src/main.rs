@@ -62,7 +62,6 @@ impl Chip {
             instruction |= low;
 
             if instruction != 0 {
-                  print!("{:x} | ", instruction);
                   match instruction & 0xF000 {
                         0x0000 => println!("Execute / clearscr / return"),
                         0x1000 => println!("Jump"),
@@ -70,7 +69,11 @@ impl Chip {
                         0x3000 => println!("Skip eq"),
                         0x4000 => println!("Skip neq"),
                         0x5000 => println!("Skip eq reg"),
-                        0x6000 => println!("Store"),
+                        0x6000 => {
+                              let reg = ((instruction & 0x0F00) >> 8) as usize;
+                              let val = (instruction & 0x00FF) as u8;
+                              self.store(reg, val);
+                        },
                         0x7000 => println!("Add"),
                         0x8000 => println!("Store / setlog / ops"),
                         0x9000 => println!("Skip neq reg"),
@@ -91,6 +94,10 @@ impl Chip {
             }
 
             self.program_counter += 2;
+      }
+
+      fn store(&mut self, reg: usize, val: u8) {
+            self.registers[reg] = val;
       }
 
       fn reset(&mut self) {
@@ -122,4 +129,9 @@ fn main() {
 
       chip.load_rom("roms/helloworld.rom");
       chip.run();
+
+      println!("Registers:");
+      for val in &chip.registers {
+            println!("{}", val);
+      }
 }
