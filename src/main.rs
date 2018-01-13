@@ -38,8 +38,18 @@ impl Chip {
             self.registers[0xF]
       }
 
-      fn reset() {
+      fn reset(&mut self) {
+            self.memory = [0; MEMORY_SIZE];
+            self.registers = [0; NUM_REGISTERS];
+            self.running = true;
+            self.stack = [0; STACK_SIZE];
+            self.stack_pointer = 0;
+            self.program_counter = 0x200;
+      }
 
+      fn load_rom(&mut self, rom: &str) {
+            self.reset();
+            self.rom = rom.to_string();
       }
 }
 
@@ -52,4 +62,9 @@ fn main() {
       println!("Flag: {}", chip.get_flag());
       println!("ROM: {}", chip.rom);
 
+      chip.load_rom("test.bin");
+
+      println!("Program counter: {}", chip.program_counter);
+      println!("Flag: {}", chip.get_flag());
+      println!("ROM: {}", chip.rom);
 }
