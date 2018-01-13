@@ -15,6 +15,20 @@ const NUM_REGISTERS: usize = 16;
 const STACK_SIZE: usize = 16;
 const PROGRAM_BASE: u16 = 0x200;
 
+/**
+* Some helper functions.
+*/
+fn add_carry(a: u8, b: u8) -> (u8, u8) {
+      let res = (a as u16) + (b as u16);
+      let carry = res & 0xFF00;
+
+      if carry > 0{
+            ((res % 256) as u8, 0x1)
+      } else {
+            (res as u8, 0x0)
+      }
+}
+
 struct Chip {
       memory: [u8; MEMORY_SIZE],
       registers: [u8; NUM_REGISTERS],
@@ -67,8 +81,8 @@ impl Chip {
                   match instruction & 0xF000 {
                         0x0000 => {
                               match instruction {
-                                    0x00E0 => println!("Clear screen"),
-                                    0x00EE => println!("Return"),
+                                    0xE0 => println!("Clear screen"),
+                                    0xEE => println!("Return"),
                                     _ => println!("Execute machine language subroutine unsupported.")
                               }
                         },
@@ -91,7 +105,54 @@ impl Chip {
                               println!("Store {} in V{}", val, reg);
                         },
                         0x7000 => println!("Add"),
-                        0x8000 => println!("Store / setlog / ops"),
+                        0x8000 => {
+                              match instruction & 0x000F {
+                                    0x0 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let val = self.load(ry);
+
+                                          self.store(rx, val);
+                                          println!("Store V{} into V{}", ry, rx);
+                                    },
+                                    0x1 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let val = self.load(rx) | self.load(ry);
+
+                                          self.store(rx, val);
+                                    },
+                                    0x2 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let val = self.load(rx) & self.load(ry);
+
+                                          self.store(rx, val);
+                                    },
+                                    0x3 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let val = self.load(rx) ^ self.load(ry);
+
+                                          self.store(rx, val);
+                                    },
+                                    0x4 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let res: u16 = self.load(rx) as u16 + self.load(ry) as u16;                                          let carry = ((res & 0xFF00) >> 8) as u8;
+                                          let val = (res & 0x00FF) as u8;
+                                          
+                                          if carry > 0 {
+                                                self.store(rx, (res % 256) as u8);
+                                                self.store(0xF, 1);
+                                          } else {
+                                                self.store(rx, val);
+                                                self.store(0xF, 0);
+                                          }
+                                    },
+                                    _ => println!("Instruction {:x} unimplemented", instruction)
+                              }
+                        },
                         0x9000 => println!("Skip neq reg"),
                         0xA000 => {
                               let addr = instruction & 0x0FFF;
@@ -101,23 +162,23 @@ impl Chip {
                         0xB000 => println!("Jump addr"),
                         0xC000 => println!("Rnd"),
                         0xD000 => {
-                              let reg_x = (instruction & 0x0F00) >> 8;
-                              let reg_y = (instruction & 0x00F0) >> 4;
+                              let rx = (instruction & 0x0F00) >> 8;
+                              let ry = (instruction & 0x00F0) >> 4;
                               let bytes = instruction & 0x000F;
-                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = {:x}", reg_x, reg_y, self.load(reg_x as usize), self.load(reg_y as usize), bytes, self.index);
+                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = {:x}", rx, ry, self.load(rx as usize), self.load(ry as usize), bytes, self.index);
                         },
                         0xE000 => println!("Skip key"),
                         0xF000 => {
                               match instruction & 0x00FF {
-                                    0x000A => {
+                                    0x0A => {
                                           let reg = (instruction & 0x0F00) >> 8;
                                           println!("Wait for keypress and store in V{}", reg);
                                     },
-                                    0x0018 => {
+                                    0x18 => {
                                           let reg = (instruction & 0x0F00) >> 8;
                                           println!("Set sound timer to value of V{} = {}", reg, self.load(reg as usize));
                                     },
-                                    0x0029 => {
+                                    0x29 => {
                                           let reg = (instruction & 0x0F00) >> 8;
                                           println!("Set I to sprite mem. address for digit in V{} = {}", reg, self.load(reg as usize));
                                     },
@@ -166,12 +227,22 @@ impl Chip {
                   self.memory[PROGRAM_BASE as usize + i] = contents[i];
             }
       }
+
+      fn dump(&self) {
+            println!("======================");
+            println!("  REGISTER DUMP");
+            println!("======================");
+            for i in 0..self.registers.len() {
+                  println!(" --> V{:} = {}", i, self.registers[i]);
+            }
+      }
 }
 
 fn main() {
 
       let mut chip = Chip::new();
 
-      chip.load_rom("roms/helloworld.rom");
+      chip.load_rom("roms/overflow2.rom");
       chip.run();
+      chip.dump();
 }
