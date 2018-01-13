@@ -1,5 +1,8 @@
 use std::time::Duration;
 use std::thread;
+use std::fs::File;
+use std::io::prelude::*;
+
 
 /**
 * http://mattmik.com/files/chip8/mastering/chip8.html
@@ -10,6 +13,7 @@ use std::thread;
 const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 const STACK_SIZE: usize = 16;
+const PROGRAM_BASE: u16 = 0x200;
 
 struct Chip {
       memory: [u8; MEMORY_SIZE],
@@ -29,7 +33,7 @@ impl Chip {
                   running: false,
                   stack: [0; STACK_SIZE],
                   stack_pointer: 0,
-                  program_counter: 0x200,
+                  program_counter: PROGRAM_BASE,
                   rom: String::from("")
             }
       }
@@ -54,10 +58,12 @@ impl Chip {
             let low: u16 = self.memory[(self.program_counter + 1) as usize] as u16;
 
             let mut instruction: u16 = 0;
-            instruction |= 0xFF00 & high;
-            instruction |= 0x00FF & low;
+            instruction |= high << 8;
+            instruction |= low;
 
-            println!("instruction: {:x} at {:x}", instruction, self.program_counter);
+            if instruction != 0 {
+                  println!("instruction: {:x} at {:x}", instruction, self.program_counter);
+            }
 
             if self.program_counter == 4094 {
                   println!("Finished memory!");
@@ -73,29 +79,27 @@ impl Chip {
             self.running = true;
             self.stack = [0; STACK_SIZE];
             self.stack_pointer = 0;
-            self.program_counter = 0x200;
+            self.program_counter = PROGRAM_BASE;
       }
 
       fn load_rom(&mut self, rom: &str) {
             self.reset();
             self.rom = rom.to_string();
+
+            let mut file = File::open(rom).unwrap();
+            let mut contents = Vec::new();
+            file.read_to_end(&mut contents).unwrap();
+
+            for i in 0..contents.len() {
+                  self.memory[PROGRAM_BASE as usize + i] = contents[i];
+            }
       }
 }
 
 fn main() {
 
       let mut chip = Chip::new();
-      chip.set_flag(231);
 
-      println!("Program counter: {}", chip.program_counter);
-      println!("Flag: {}", chip.get_flag());
-      println!("ROM: {}", chip.rom);
-
-      chip.load_rom("test.bin");
-
-      println!("Program counter: {}", chip.program_counter);
-      println!("Flag: {}", chip.get_flag());
-      println!("ROM: {}", chip.rom);
-
+      chip.load_rom("roms/helloworld.rom");
       chip.run();
 }
