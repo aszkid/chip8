@@ -50,7 +50,21 @@ impl Chip {
       }
       // private function, in theory
       fn cycle(&mut self) {
-            println!("Cycling...");
+            let high: u16 = self.memory[self.program_counter as usize] as u16;
+            let low: u16 = self.memory[(self.program_counter + 1) as usize] as u16;
+
+            let mut instruction: u16 = 0;
+            instruction |= 0xFF00 & high;
+            instruction |= 0x00FF & low;
+
+            println!("instruction: {:x} at {:x}", instruction, self.program_counter);
+
+            if self.program_counter == 4094 {
+                  println!("Finished memory!");
+                  self.running = false;
+            }
+
+            self.program_counter += 2;
       }
 
       fn reset(&mut self) {
