@@ -162,6 +162,32 @@ impl Chip {
                                           self.store(rx, val);
                                           self.store(0xF, borrow);
                                     },
+                                    0x6 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+                                          let val = self.load(ry);
+                                          // extract lsb
+                                          self.store(0xF, val & 0x0001);
+                                          self.store(rx, val >> 1);
+                                    },
+                                    0x7 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let (val, borrow) = sub_borrow(self.load(ry), self.load(rx));
+
+                                          self.store(rx, val);
+                                          self.store(0xF, borrow);
+                                    },
+                                    0xE => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+                                          let val = self.load(ry);
+                                          // extract msb
+                                          self.store(0xF, val >> 7);
+                                          self.store(rx, val << 1);
+                                    },
                                     _ => println!("Instruction {:x} unimplemented", instruction)
                               }
                         },
@@ -213,7 +239,7 @@ impl Chip {
       fn store(&mut self, reg: usize, val: u8) {
             self.registers[reg] = val;
       }
-      fn load(&mut self, reg: usize) -> u8 {
+      fn load(&self, reg: usize) -> u8 {
             self.registers[reg]
       }
 
@@ -254,7 +280,7 @@ fn main() {
 
       let mut chip = Chip::new();
 
-      chip.load_rom("roms/underflow.rom");
+      chip.load_rom("roms/shift.rom");
       chip.run();
       chip.dump();
 }
