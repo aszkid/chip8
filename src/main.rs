@@ -22,11 +22,21 @@ fn add_carry(a: u8, b: u8) -> (u8, u8) {
       let res = (a as u16) + (b as u16);
       let carry = res & 0xFF00;
 
-      if carry > 0{
+      if carry > 0 {
             ((res % 256) as u8, 0x1)
       } else {
             (res as u8, 0x0)
       }
+}
+fn sub_borrow(a: u8, b: u8) -> (u8, u8) {
+      let under = b > a;
+      let res = if under {
+            0xFF - (b - a) + 1
+      } else {
+            a - b
+      };
+
+      (res, if under {0x0} else {0x1})
 }
 
 struct Chip {
@@ -144,6 +154,14 @@ impl Chip {
                                           self.store(rx, val);
                                           self.store(0xF, carry);
                                     },
+                                    0x5 => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
+                                          let (val, borrow) = sub_borrow(self.load(rx), self.load(ry));
+
+                                          self.store(rx, val);
+                                          self.store(0xF, borrow);
+                                    },
                                     _ => println!("Instruction {:x} unimplemented", instruction)
                               }
                         },
@@ -236,7 +254,7 @@ fn main() {
 
       let mut chip = Chip::new();
 
-      chip.load_rom("roms/overflow2.rom");
+      chip.load_rom("roms/underflow.rom");
       chip.run();
       chip.dump();
 }
