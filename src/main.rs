@@ -105,7 +105,6 @@ impl Chip {
                         },
                         0x2000 => {
                               let addr = instruction & 0x0FFF;
-                              println!("Execute subroutine at {:x}", addr);
                         },
                         0x3000 => println!("Skip eq"),
                         0x4000 => println!("Skip neq"),
@@ -199,7 +198,9 @@ impl Chip {
                               self.index = addr;
                               println!("Store addr. {:x} in register I", addr);
                         },
-                        0xB000 => println!("Jump addr"),
+                        0xB000 => {
+                              self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
+                        },
                         0xC000 => {
                               let rx = ((instruction & 0x0F00) >> 8) as usize;
                               let mask = (instruction & 0x00FF) as u8;
@@ -222,6 +223,10 @@ impl Chip {
                                     0x18 => {
                                           let reg = (instruction & 0x0F00) >> 8;
                                           println!("Set sound timer to value of V{} = {}", reg, self.load(reg as usize));
+                                    },
+                                    0x1E => {
+                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
+                                          self.index += self.load(rx) as u16;
                                     },
                                     0x29 => {
                                           let reg = (instruction & 0x0F00) >> 8;
