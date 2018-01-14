@@ -133,7 +133,13 @@ impl Chip {
                         0xB000 => self.op_jump_i_imm_plus(instruction),
                         0xC000 => self.op_rand(instruction),
                         0xD000 => self.op_draw(instruction),
-                        0xE000 => println!("Skip key"),
+                        0xE000 => {
+                              match instruction & 0x00FF {
+                                    0x9E => self.op_skp(instruction),
+                                    0xA1 => self.op_sknp(instruction),
+                                    _ => panic!("Undefined instruction {:x}", instruction)
+                              }
+                        },
                         0xF000 => {
                               match instruction & 0x00FF {
                                     0x0A => self.op_load_reg_key(instruction),
@@ -363,5 +369,11 @@ impl Chip {
             if self.load(rx) != self.load(ry) {
                   self.program_counter += 2;
             }
+      }
+      fn op_skp(&mut self, instruction: u16) {
+            println!("Skip if key pressed");
+      }
+      fn op_sknp(&mut self, instruction: u16) {
+            println!("Skip if key not pressed");
       }
 }
