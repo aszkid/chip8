@@ -90,149 +90,60 @@ impl Chip {
                   match instruction & 0xF000 {
                         0x0000 => {
                               match instruction {
-                                    0xE0 => println!("Clear screen"),
-                                    0xEE => println!("Return"),
-                                    _ => println!("Execute machine language subroutine unsupported.")
+                                    0xE0 => self.op_clearsrc(),
+                                    0xEE => self.op_ret(),
+                                    _ => panic!("Execute machine language subroutine unsupported.")
                               }
                         },
-                        0x1000 => {
-                              let addr = instruction & 0x0FFF;
-                              self.program_counter = addr;
-                              println!("Jump to physical address {:x}", addr);
+                        0x1000 => self.op_jump_imm(instruction),
+                        0x2000 => self.op_call(instruction),
+                        0x3000 => self.op_se_reg_imm(instruction),
+                        0x4000 => self.op_sne_reg_imm(instruction),
+                        0x5000 => {
+                              if instruction & 0x000F == 0 {
+                                    self.op_se_reg_reg(instruction);
+                              } else {
+                                    panic!("Undefined instrution {:x}", instruction);
+                              }
                         },
-                        0x2000 => {
-                              let addr = instruction & 0x0FFF;
-                        },
-                        0x3000 => println!("Skip eq"),
-                        0x4000 => println!("Skip neq"),
-                        0x5000 => println!("Skip eq reg"),
-                        0x6000 => {
-                              let reg = ((instruction & 0x0F00) >> 8) as usize;
-                              let val = (instruction & 0x00FF) as u8;
-                              self.store(reg, val);
-                              println!("Store {} in V{}", val, reg);
-                        },
-                        0x7000 => println!("Add"),
+                        0x6000 => self.op_load_reg_imm(instruction),
+                        0x7000 => self.op_add_reg_imm(instruction),
                         0x8000 => {
                               match instruction & 0x000F {
-                                    0x0 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let val = self.load(ry);
-
-                                          self.store(rx, val);
-                                          println!("Store V{} into V{}", ry, rx);
-                                    },
-                                    0x1 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let val = self.load(rx) | self.load(ry);
-
-                                          self.store(rx, val);
-                                    },
-                                    0x2 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let val = self.load(rx) & self.load(ry);
-
-                                          self.store(rx, val);
-                                    },
-                                    0x3 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let val = self.load(rx) ^ self.load(ry);
-
-                                          self.store(rx, val);
-                                    },
-                                    0x4 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let (val, carry) = add_carry(self.load(rx), self.load(ry));
-
-                                          self.store(rx, val);
-                                          self.set_flag(carry);
-                                    },
-                                    0x5 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let (val, borrow) = sub_borrow(self.load(rx), self.load(ry));
-
-                                          self.store(rx, val);
-                                          self.set_flag(borrow);
-                                    },
-                                    0x6 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-
-                                          let val = self.load(ry);
-                                          // extract lsb
-                                          self.set_flag(val & 0x0001);
-                                          self.store(rx, val >> 1);
-                                    },
-                                    0x7 => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-                                          let (val, borrow) = sub_borrow(self.load(ry), self.load(rx));
-
-                                          self.store(rx, val);
-                                          self.set_flag(borrow);
-                                    },
-                                    0xE => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          let ry = ((instruction & 0x00F0) >> 4) as usize;
-
-                                          let val = self.load(ry);
-                                          // extract msb
-                                          self.set_flag(val >> 7);
-                                          self.store(rx, val << 1);
-                                    },
-                                    _ => println!("Instruction {:x} unimplemented", instruction)
+                                    0x0 => self.op_load_reg_reg(instruction),
+                                    0x1 => self.op_or(instruction),
+                                    0x2 => self.op_and(instruction),
+                                    0x3 => self.op_xor(instruction),
+                                    0x4 => self.op_add_reg_reg(instruction),
+                                    0x5 => self.op_sub_reg_reg(instruction),
+                                    0x6 => self.op_shr(instruction),
+                                    0x7 => self.op_subn_reg_reg(instruction),
+                                    0xE => self.op_shl(instruction),
+                                    _ => panic!("Instruction {:x} unimplemented", instruction)
                               }
                         },
-                        0x9000 => println!("Skip neq reg"),
-                        0xA000 => {
-                              let addr = instruction & 0x0FFF;
-                              self.index = addr;
-                              println!("Store addr. {:x} in register I", addr);
+                        0x9000 => {
+                              if instruction & 0x000F == 0{
+                                    self.op_sne_reg_reg(instruction);
+                              } else {
+                                    panic!("Undefined instruction {:x}", instruction);
+                              }
                         },
-                        0xB000 => {
-                              self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
-                        },
-                        0xC000 => {
-                              let rx = ((instruction & 0x0F00) >> 8) as usize;
-                              let mask = (instruction & 0x00FF) as u8;
-
-                              self.store(rx, rand::random::<u8>() & mask);
-                        },
-                        0xD000 => {
-                              let rx = (instruction & 0x0F00) >> 8;
-                              let ry = (instruction & 0x00F0) >> 4;
-                              let bytes = instruction & 0x000F;
-                              println!("Draw sprite at (V{},V{}) = ({},{}) with {} bytes of data starting at I = {:x}", rx, ry, self.load(rx as usize), self.load(ry as usize), bytes, self.index);
-                        },
+                        0xA000 => self.op_load_i_imm(instruction),
+                        0xB000 => self.op_jump_i_imm_plus(instruction),
+                        0xC000 => self.op_rand(instruction),
+                        0xD000 => self.op_draw(instruction),
                         0xE000 => println!("Skip key"),
                         0xF000 => {
                               match instruction & 0x00FF {
-                                    0x0A => {
-                                          let reg = (instruction & 0x0F00) >> 8;
-                                          println!("Wait for keypress and store in V{}", reg);
-                                    },
-                                    0x18 => {
-                                          let reg = (instruction & 0x0F00) >> 8;
-                                          println!("Set sound timer to value of V{} = {}", reg, self.load(reg as usize));
-                                    },
-                                    0x1E => {
-                                          let rx = ((instruction & 0x0F00) >> 8) as usize;
-                                          self.index += self.load(rx) as u16;
-                                    },
-                                    0x29 => {
-                                          let reg = (instruction & 0x0F00) >> 8;
-                                          println!("Set I to sprite mem. address for digit in V{} = {}", reg, self.load(reg as usize));
-                                    },
-                                    _ => println!("Timer stuff")
+                                    0x0A => self.op_load_reg_key(instruction),
+                                    0x18 => self.op_load_st_reg(instruction),
+                                    0x1E => self.op_add_i_reg(instruction),
+                                    0x29 => self.op_load_font_reg(instruction),
+                                    _ => panic!("Timer stuff")
                               }
                         },
-                        _ => println!("dunno")
+                        _ => panic!("dunno")
                   }
             }
 
@@ -281,6 +192,176 @@ impl Chip {
             println!("======================");
             for i in 0..self.registers.len() {
                   println!(" --> V{:} = {}", i, self.registers[i]);
+            }
+      }
+
+      /**
+       * Instruction implementations.
+       */
+      fn op_clearsrc(&mut self) {
+            println!("Clear screen");
+            // TODO
+      }
+      fn op_ret(&mut self) {
+            println!("Subroutine return");
+            // TODO
+      }
+      fn op_jump_imm(&mut self, instruction: u16) {
+            let addr = instruction & 0x0FFF;
+            self.program_counter = addr;
+      }
+      fn op_call(&mut self, instruction: u16) {
+            let addr = instruction & 0x0FFF;
+            println!("Subroutine call");
+            // TODO
+      }
+      fn op_load_reg_imm(&mut self, instruction: u16) {
+            let reg = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (instruction & 0x00FF) as u8;
+            
+            self.store(reg, val);
+      }
+      fn op_load_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let val = self.load(ry);
+
+            self.store(rx, val);
+      }
+      fn op_or(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let val = self.load(rx) | self.load(ry);
+
+            self.store(rx, val);
+      }
+      fn op_and(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let val = self.load(rx) & self.load(ry);
+
+            self.store(rx, val);
+      }
+      fn op_xor(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let val = self.load(rx) ^ self.load(ry);
+
+            self.store(rx, val);
+      }
+      fn op_add_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let (val, carry) = add_carry(self.load(rx), self.load(ry));
+
+            self.store(rx, val);
+            self.set_flag(carry);
+      }
+      fn op_sub_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let (val, borrow) = sub_borrow(self.load(rx), self.load(ry));
+
+            self.store(rx, val);
+            self.set_flag(borrow);
+      }
+      fn op_shr(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+            let val = self.load(ry);
+            // extract lsb
+            self.set_flag(val & 0x0001);
+            self.store(rx, val >> 1);
+      }
+      fn op_subn_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let (val, borrow) = sub_borrow(self.load(ry), self.load(rx));
+
+            self.store(rx, val);
+            self.set_flag(borrow);
+      }
+      fn op_shl(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+            let val = self.load(ry);
+            // extract msb
+            self.set_flag(val >> 7);
+            self.store(rx, val << 1);
+      }
+      fn op_load_i_imm(&mut self, instruction: u16) {
+            let addr = instruction & 0x0FFF;
+            self.index = addr;
+      }
+      fn op_jump_i_imm_plus(&mut self, instruction: u16) {
+            self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
+      }
+      fn op_rand(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let mask = (instruction & 0x00FF) as u8;
+
+            self.store(rx, rand::random::<u8>() & mask);
+      }
+      fn op_draw(&mut self, instruction: u16) {
+            let rx = (instruction & 0x0F00) >> 8;
+            let ry = (instruction & 0x00F0) >> 4;
+            let bytes = instruction & 0x000F;
+            // TODO
+      }
+      fn op_load_reg_key(&mut self, instruction: u16) {
+            let reg = (instruction & 0x0F00) >> 8;
+            // TODO
+      }
+      fn op_load_st_reg(&mut self, instruction: u16) {
+            let reg = (instruction & 0x0F00) >> 8;
+            // TODO
+      }
+      fn op_add_i_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            self.index += self.load(rx) as u16;
+      }
+      fn op_load_font_reg(&mut self, instruction: u16) {
+            let reg = (instruction & 0x0F00) >> 8;
+            // TODO
+      }
+      fn op_se_reg_imm(&mut self, instruction: u16) {
+            let reg = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (instruction & 0x00FF) as u8;
+
+            if self.load(reg) == val {
+                  self.program_counter += 2;
+            }
+      }
+      fn op_sne_reg_imm(&mut self, instruction: u16) {
+            let reg = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (instruction & 0x00FF) as u8;
+
+            if self.load(reg) != val {
+                  self.program_counter += 2;
+            }
+      }
+      fn op_se_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+            if self.load(rx) == self.load(ry) {
+                  self.program_counter += 2;
+            }
+      }
+      fn op_add_reg_imm(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (instruction & 0x00FF) as u8 + self.load(rx);
+
+            self.store(rx, val);
+      }
+      fn op_sne_reg_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+
+            if self.load(rx) != self.load(ry) {
+                  self.program_counter += 2;
             }
       }
 }
