@@ -201,6 +201,7 @@ impl Chip {
 
       pub fn reset(&mut self) {
             self.memory = [0; MEMORY_SIZE];
+            self.memory[0..80].copy_from_slice(&FONT_SET);
             self.registers = [0; NUM_REGISTERS];
             self.running = true;
             self.stack = [0; STACK_SIZE];
@@ -208,7 +209,6 @@ impl Chip {
             self.program_counter = PROGRAM_BASE;
             self.index = 0;
             self.display = [0; DISPLAY_SIZE];
-            self.display[0..80].copy_from_slice(&FONT_SET);
       }
 
       pub fn load_rom(&mut self, rom: &str) {
