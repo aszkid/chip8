@@ -1,6 +1,10 @@
+extern crate glium;
+extern crate glium_sdl2;
 extern crate sdl2;
-mod chip8;
 
+mod chip8;
+use glium_sdl2::DisplayBuild;
+use glium::Surface;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::video::GLProfile;
@@ -14,18 +18,16 @@ fn main() {
       gl_attr.set_context_profile(GLProfile::Core);
       gl_attr.set_context_version(3, 3);
 
-      let window = video_subsys.window("CHIP-8", 800, 600)
-            .opengl()
-            .build()
+      let window = video_subsys.window("CHIP-8", 800, 400)
+            .build_glium()
             .unwrap();
-
-      let gl_ctx = window.gl_create_context().unwrap();
-      debug_assert_eq!(gl_attr.context_profile(), GLProfile::Core);
-      debug_assert_eq!(gl_attr.context_version(), (3, 3));
 
       let mut ev_pump = sdl_ctx.event_pump().unwrap();
       'running: loop {
-            window.gl_swap_window();
+            let mut target = window.draw();
+            //target.clear_color(0.2, 0.3, 0.3, 1.0);
+            target.finish().unwrap();
+
             for ev in ev_pump.poll_iter() {
                   match ev {
                         Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {

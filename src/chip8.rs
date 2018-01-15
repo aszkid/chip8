@@ -14,6 +14,9 @@ const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 const STACK_SIZE: usize = 16;
 const PROGRAM_BASE: u16 = 0x200;
+const DISPLAY_W: usize = 64;
+const DISPLAY_H: usize = 32;
+const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
 
 /**
 * Some helper functions.
@@ -47,7 +50,8 @@ pub struct Chip {
       stack_pointer: u8,
       program_counter: u16,
       rom: String,
-      index: u16
+      index: u16,
+      display: [u8; DISPLAY_SIZE]
 }
 
 impl Chip {
@@ -60,8 +64,13 @@ impl Chip {
                   stack_pointer: 0,
                   program_counter: PROGRAM_BASE,
                   rom: String::from(""),
-                  index: 0
+                  index: 0,
+                  display: [0; DISPLAY_SIZE]
             }
+      }
+
+      fn display_read(&self, x: usize, y: usize) -> u8 {
+            self.display[y * DISPLAY_W + x]
       }
 
       fn set_flag(&mut self, val: u8) {
@@ -177,6 +186,7 @@ impl Chip {
             self.stack_pointer = 0;
             self.program_counter = PROGRAM_BASE;
             self.index = 0;
+            self.display = [0; DISPLAY_SIZE];
       }
 
       pub fn load_rom(&mut self, rom: &str) {
@@ -205,8 +215,7 @@ impl Chip {
        * Instruction implementations.
        */
       fn op_clearsrc(&mut self) {
-            println!("Clear screen");
-            // TODO
+            self.display = [0; DISPLAY_SIZE];
       }
       fn op_ret(&mut self) {
             println!("Subroutine return");
