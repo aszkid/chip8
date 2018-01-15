@@ -18,6 +18,25 @@ const DISPLAY_W: usize = 64;
 const DISPLAY_H: usize = 32;
 const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
 
+const FONT_SET: [u8; 80] = [
+      0xF0, 0x90, 0x90, 0x90, 0xF0,
+      0x20, 0x60, 0x20, 0x20, 0x70,
+      0xF0, 0x10, 0xF0, 0x80, 0xF0,
+      0xF0, 0x10, 0xF0, 0x10, 0xF0,
+      0x90, 0x90, 0xF0, 0x10, 0x10,
+      0xF0, 0x80, 0xF0, 0x10, 0xF0,
+      0xF0, 0x80, 0xF0, 0x90, 0xF0,
+      0xF0, 0x10, 0x20, 0x40, 0x40,
+      0xF0, 0x90, 0xF0, 0x90, 0xF0,
+      0xF0, 0x90, 0xF0, 0x10, 0xF0,
+      0xF0, 0x90, 0xF0, 0x90, 0x90,
+      0xE0, 0x90, 0xE0, 0x90, 0xE0,
+      0xF0, 0x80, 0x80, 0x80, 0xF0,
+      0xE0, 0x90, 0x90, 0x90, 0xE0,
+      0xF0, 0x80, 0xF0, 0x80, 0xF0,
+      0xF0, 0x80, 0xF0, 0x80, 0x80
+];
+
 /**
 * Some helper functions.
 */
@@ -56,7 +75,7 @@ pub struct Chip {
 
 impl Chip {
       pub fn new() -> Chip {
-            Chip {
+            let mut c = Chip {
                   memory: [0; MEMORY_SIZE],
                   registers: [0; NUM_REGISTERS],
                   running: false,
@@ -66,7 +85,9 @@ impl Chip {
                   rom: String::from(""),
                   index: 0,
                   display: [0; DISPLAY_SIZE]
-            }
+            };
+            c.reset();
+            c
       }
 
       fn display_read(&self, x: usize, y: usize) -> u8 {
@@ -187,6 +208,7 @@ impl Chip {
             self.program_counter = PROGRAM_BASE;
             self.index = 0;
             self.display = [0; DISPLAY_SIZE];
+            self.display[0..80].copy_from_slice(&FONT_SET);
       }
 
       pub fn load_rom(&mut self, rom: &str) {
