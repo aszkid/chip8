@@ -360,8 +360,9 @@ impl Chip {
             self.index += self.load(rx) as u16;
       }
       fn op_load_font_reg(&mut self, instruction: u16) {
-            let reg = (instruction & 0x0F00) >> 8;
-            // TODO
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let digit = self.load(rx);
+            self.index = (digit as u16) * 5;
       }
       fn op_se_reg_imm(&mut self, instruction: u16) {
             let reg = ((instruction & 0x0F00) >> 8) as usize;
