@@ -68,7 +68,7 @@ pub struct Chip {
       pub registers: [u8; NUM_REGISTERS],
       pub running: bool,
       pub stack: [u16; STACK_SIZE],
-      pub stack_pointer: u8,
+      pub stack_pointer: usize,
       pub program_counter: u16,
       pub rom: String,
       pub index: u16,
@@ -275,6 +275,10 @@ impl Chip {
             for i in 0..self.registers.len() {
                   println!(" --> V{:} = {}", i, self.registers[i]);
             }
+            println!(" --> DT = {}", self.delay_timer);
+            println!(" --> ST = {}", self.sound_timer);
+            println!(" --> PC = {}", self.program_counter);
+            println!(" --> I  = {}", self.index);
       }
 
       /**
@@ -284,17 +288,21 @@ impl Chip {
             self.display = [false; DISPLAY_SIZE];
       }
       fn op_ret(&mut self) {
-            println!("Subroutine return");
-            // TODO
+            self.program_counter = self.stack[self.stack_pointer-1];
+            self.stack_pointer -= 1;
       }
       fn op_jump_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.program_counter = addr;
       }
       fn op_call(&mut self, instruction: u16) {
-            let addr = instruction & 0x0FFF;
-            println!("Subroutine call");
-            // TODO
+            if self.stack_pointer >= STACK_SIZE {
+                  panic!("Stack overflow!");
+            }
+            let addr = (instruction & 0x0FFF) as u16;
+            self.stack[self.stack_pointer] = self.program_counter;
+            self.program_counter = addr;
+            self.stack_pointer += 1;
       }
       fn op_load_reg_imm(&mut self, instruction: u16) {
             let reg = ((instruction & 0x0F00) >> 8) as usize;
