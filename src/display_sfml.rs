@@ -45,10 +45,14 @@ impl Display for DisplaySFML {
       fn draw(&mut self, video: &[u8; chip8::DISPLAY_SIZE]) {
             use self::sfml::graphics::RenderTarget;
             for i in 0..WINDOW_LEN {
-                  self.texture_data[i] = ((i as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
-                  self.texture_data[i+1] = (((i % WINDOW_H) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
-                  self.texture_data[i+2] = (((i % WINDOW_W) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
-                  self.texture_data[i+3] = 255;
+                  self.texture_data[i*4] = ((i as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
+                  self.texture_data[i*4+1] = (((i % WINDOW_H) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
+                  self.texture_data[i*4+2] = (((i % WINDOW_W) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
+                  self.texture_data[i*4+3] = 255;
+                  /*self.texture_data[i*4] = 255;
+                  self.texture_data[i*4+1] = 0;
+                  self.texture_data[i*4+2] = 0;
+                  self.texture_data[i*4+3] = 255;*/
             }
             self.texture.update_from_pixels(&self.texture_data, WINDOW_W as u32, WINDOW_H as u32, 0, 0);
             let mut sprite = sfml::graphics::Sprite::with_texture(&self.texture);
