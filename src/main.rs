@@ -10,6 +10,7 @@ fn main() {
       let mut display = display_sfml::DisplaySFML::new();
       // Create chip instance
       let mut chip = chip8::Chip::new();
+      chip.load_rom("roms/draw.rom");
 
       'running: loop {
             

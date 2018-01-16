@@ -335,10 +335,14 @@ impl Chip {
             self.store(rx, rand::random::<u8>() & mask);
       }
       fn op_draw(&mut self, instruction: u16) {
-            let rx = (instruction & 0x0F00) >> 8;
-            let ry = (instruction & 0x00F0) >> 4;
-            let bytes = instruction & 0x000F;
-            // TODO
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let ry = ((instruction & 0x00F0) >> 4) as usize;
+            let bytes = (instruction & 0x000F) as usize;
+            let pos = (self.load(rx) as usize) + (self.load(ry) as usize) * DISPLAY_W;
+
+            self.display[pos..(pos+bytes)].copy_from_slice(
+                  &self.memory[(self.index as usize)..(self.index as usize +bytes)]
+            );
       }
       fn op_load_reg_key(&mut self, instruction: u16) {
             let reg = (instruction & 0x0F00) >> 8;

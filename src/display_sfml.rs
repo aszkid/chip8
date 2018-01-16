@@ -48,14 +48,18 @@ impl Display for DisplaySFML {
             use self::sfml::graphics::{RenderTarget, Transformable};
 
             for i in 0..chip8::DISPLAY_SIZE {
-                  self.texture_data[i*4] = ((i as f32)/(chip8::DISPLAY_SIZE as f32) * 255.0) as u8;
+                  /*self.texture_data[i*4] = ((i as f32)/(chip8::DISPLAY_SIZE as f32) * 255.0) as u8;
                   self.texture_data[i*4+1] = (((i % chip8::DISPLAY_W) as f32)/(chip8::DISPLAY_H as f32) * 255.0) as u8;
                   self.texture_data[i*4+2] = (((i % chip8::DISPLAY_H) as f32)/(chip8::DISPLAY_W as f32) * 255.0) as u8;
-                  self.texture_data[i*4+3] = 255;
+                  self.texture_data[i*4+3] = 255;*/
                   /*self.texture_data[i*4] = 255;
                   self.texture_data[i*4+1] = 0;
                   self.texture_data[i*4+2] = 0;
                   self.texture_data[i*4+3] = 255;*/
+                  self.texture_data[i*4] = video[i];
+                  self.texture_data[i*4+1] = video[i];
+                  self.texture_data[i*4+2] = video[i];
+                  self.texture_data[i*4+3] = 255;
             }
             self.texture.update_from_pixels(&self.texture_data, chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32, 0, 0);
             let mut sprite = sfml::graphics::Sprite::with_texture(&self.texture);
