@@ -9,7 +9,7 @@ const WINDOW_LEN: usize = WINDOW_W * WINDOW_H;
 
 pub struct DisplaySFML {
       window: sfml::graphics::RenderWindow,
-      texture_data: [u8; WINDOW_LEN * 4],
+      texture_data: [u8; chip8::DISPLAY_SIZE * 4],
       texture: sfml::graphics::Texture,
 }
 
@@ -18,18 +18,20 @@ impl DisplaySFML {
             use self::sfml::window::{Event, Style};
             use self::sfml::graphics::RenderWindow;
             let mut window = RenderWindow::new(
-                  (800, 400),
+                  (WINDOW_W as u32, WINDOW_H as u32),
                   "CHIP-8",
                   Style::CLOSE,
                   &Default::default()
             );
             window.set_framerate_limit(60);
 
-            DisplaySFML {
+            let mut disp = DisplaySFML {
                   window,
-                  texture_data: [0; WINDOW_LEN * 4],
-                  texture: sfml::graphics::Texture::new(WINDOW_W as u32, WINDOW_H as u32).unwrap() 
-            }
+                  texture_data: [0; chip8::DISPLAY_SIZE * 4],
+                  texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap() 
+            };
+            disp.texture.set_repeated(false);
+            return disp;
       }
 }
 
@@ -43,19 +45,21 @@ impl Display for DisplaySFML {
             }
       }
       fn draw(&mut self, video: &[u8; chip8::DISPLAY_SIZE]) {
-            use self::sfml::graphics::RenderTarget;
-            for i in 0..WINDOW_LEN {
-                  self.texture_data[i*4] = ((i as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
-                  self.texture_data[i*4+1] = (((i % WINDOW_H) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
-                  self.texture_data[i*4+2] = (((i % WINDOW_W) as f32)/(WINDOW_LEN as f32) * 255.0) as u8;
+            use self::sfml::graphics::{RenderTarget, Transformable};
+
+            for i in 0..chip8::DISPLAY_SIZE {
+                  self.texture_data[i*4] = ((i as f32)/(chip8::DISPLAY_SIZE as f32) * 255.0) as u8;
+                  self.texture_data[i*4+1] = (((i % chip8::DISPLAY_W) as f32)/(chip8::DISPLAY_H as f32) * 255.0) as u8;
+                  self.texture_data[i*4+2] = (((i % chip8::DISPLAY_H) as f32)/(chip8::DISPLAY_W as f32) * 255.0) as u8;
                   self.texture_data[i*4+3] = 255;
                   /*self.texture_data[i*4] = 255;
                   self.texture_data[i*4+1] = 0;
                   self.texture_data[i*4+2] = 0;
                   self.texture_data[i*4+3] = 255;*/
             }
-            self.texture.update_from_pixels(&self.texture_data, WINDOW_W as u32, WINDOW_H as u32, 0, 0);
+            self.texture.update_from_pixels(&self.texture_data, chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32, 0, 0);
             let mut sprite = sfml::graphics::Sprite::with_texture(&self.texture);
+            sprite.set_scale(sfml::system::Vector2f::new(12.5, 12.5));
             self.window.draw(&sprite);
             self.window.display();
       }

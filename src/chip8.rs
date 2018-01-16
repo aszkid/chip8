@@ -14,8 +14,8 @@ const MEMORY_SIZE: usize = 4096;
 const NUM_REGISTERS: usize = 16;
 const STACK_SIZE: usize = 16;
 const PROGRAM_BASE: u16 = 0x200;
-const DISPLAY_W: usize = 64;
-const DISPLAY_H: usize = 32;
+pub const DISPLAY_W: usize = 64;
+pub const DISPLAY_H: usize = 32;
 pub const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
 
 const FONT_SET: [u8; 80] = [
