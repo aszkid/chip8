@@ -93,6 +93,9 @@ impl Chip {
       fn display_read(&self, x: usize, y: usize) -> u8 {
             self.display[y * DISPLAY_W + x]
       }
+      fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) {
+            self.display[y * DISPLAY_W + x] ^= byte;
+      }
 
       fn set_flag(&mut self, val: u8) {
             self.registers[0xF] = val;
@@ -338,11 +341,17 @@ impl Chip {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
             let bytes = (instruction & 0x000F) as usize;
+            let pos_x = self.load(rx) as usize;
+            let pos_y = self.load(ry) as usize;
             let pos = (self.load(rx) as usize) + (self.load(ry) as usize) * DISPLAY_W;
 
-            self.display[pos..(pos+bytes)].copy_from_slice(
+            /*self.display[pos..(pos+bytes)].copy_from_slice(
                   &self.memory[(self.index as usize)..(self.index as usize +bytes)]
-            );
+            );*/
+            let mut src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
+            for i in 0..src.len() {
+                  self.display_write_byte(pos_x, pos_y + i, src[i]);
+            }
       }
       fn op_load_reg_key(&mut self, instruction: u16) {
             let reg = (instruction & 0x0F00) >> 8;
