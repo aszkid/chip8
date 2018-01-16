@@ -18,6 +18,7 @@ const PROGRAM_BASE: u16 = 0x200;
 pub const DISPLAY_W: usize = 64;
 pub const DISPLAY_H: usize = 32;
 pub const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
+const KEYPAD_SIZE: usize = 16;
 
 const FONT_SET: [u8; 80] = [
       0xF0, 0x90, 0x90, 0x90, 0xF0,
@@ -74,7 +75,10 @@ pub struct Chip {
       pub display: [bool; DISPLAY_SIZE],
       pub clock: u64,
       pub delay_timer: u8,
-      pub sound_timer: u8
+      pub sound_timer: u8,
+      pub key_pressed: u8,
+      pub keypad: [bool; KEYPAD_SIZE],
+      wait: u8
 }
 
 impl Chip {
@@ -91,7 +95,10 @@ impl Chip {
                   display: [false; DISPLAY_SIZE],
                   clock: time::precise_time_ns(),
                   delay_timer: 0,
-                  sound_timer: 0
+                  sound_timer: 0,
+                  key_pressed: 0x10,
+                  keypad: [false; KEYPAD_SIZE],
+                  wait: 0x10
             };
             c.reset();
             c
@@ -111,9 +118,6 @@ impl Chip {
       fn set_flag(&mut self, val: u8) {
             self.registers[0xF] = val;
       }
-      fn get_flag(&self) -> u8 {
-            self.registers[0xF]
-      }
 
       pub fn cycle(&mut self) {
             let high: u16 = self.memory[self.program_counter as usize] as u16;
@@ -132,6 +136,19 @@ impl Chip {
                   }
                   if self.sound_timer != 0 {
                         self.sound_timer -= 1;
+                  }
+            }
+            
+            if self.wait != 0x10 {
+                  if self.key_pressed != 0x10 {
+                        let wait = self.wait.clone();
+                        let key = self.key_pressed.clone();
+                        self.store(wait as usize, key as u8);
+                        self.wait = 0x10;
+                        self.key_pressed = 0x10;
+                        println!("Got it!");
+                  } else {
+                        return;
                   }
             }
 
@@ -179,7 +196,7 @@ impl Chip {
                               }
                         },
                         0xA000 => self.op_load_i_imm(instruction),
-                        0xB000 => self.op_jump_i_imm_plus(instruction),
+                        0xB000 => self.op_jump_imm_plus(instruction),
                         0xC000 => self.op_rand(instruction),
                         0xD000 => self.op_draw(instruction),
                         0xE000 => {
@@ -233,6 +250,9 @@ impl Chip {
             self.clock = time::precise_time_ns();
             self.delay_timer = 0;
             self.sound_timer = 0;
+            self.key_pressed = 0x10;
+            self.keypad = [false; KEYPAD_SIZE];
+            self.wait = 0x10;
       }
 
       pub fn load_rom(&mut self, rom: &str) {
@@ -356,7 +376,7 @@ impl Chip {
             let addr = instruction & 0x0FFF;
             self.index = addr;
       }
-      fn op_jump_i_imm_plus(&mut self, instruction: u16) {
+      fn op_jump_imm_plus(&mut self, instruction: u16) {
             self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
       }
       fn op_rand(&mut self, instruction: u16) {
@@ -371,19 +391,17 @@ impl Chip {
             let bytes = (instruction & 0x000F) as usize;
             let pos_x = self.load(rx) as usize;
             let pos_y = self.load(ry) as usize;
-            let pos = (self.load(rx) as usize) + (self.load(ry) as usize) * DISPLAY_W;
 
             /*self.display[pos..(pos+bytes)].copy_from_slice(
                   &self.memory[(self.index as usize)..(self.index as usize +bytes)]
             );*/
-            let mut src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
+            let src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
             for i in 0..src.len() {
                   self.display_write_byte(pos_x, pos_y + i, src[i]);
             }
       }
       fn op_load_reg_key(&mut self, instruction: u16) {
-            let reg = (instruction & 0x0F00) >> 8;
-            // TODO
+            self.wait = ((instruction & 0x0F00) >> 8) as u8;
       }
       fn op_load_st_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
