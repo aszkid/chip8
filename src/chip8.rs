@@ -71,6 +71,7 @@ pub struct Chip {
       pub stack_pointer: usize,
       pub program_counter: u16,
       pub rom: String,
+      rom_size: usize,
       pub index: u16,
       pub display: [bool; DISPLAY_SIZE],
       pub clock: u64,
@@ -91,6 +92,7 @@ impl Chip {
                   stack_pointer: 0,
                   program_counter: PROGRAM_BASE,
                   rom: String::from(""),
+                  rom_size: 0,
                   index: 0,
                   display: [false; DISPLAY_SIZE],
                   clock: time::precise_time_ns(),
@@ -153,6 +155,7 @@ impl Chip {
             }
 
             if instruction != 0 {
+                  println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
                   match instruction & 0xF000 {
                         0x0000 => {
                               match instruction {
@@ -215,7 +218,9 @@ impl Chip {
                                     0x1E => self.op_add_i_reg(instruction),
                                     0x29 => self.op_load_font_reg(instruction),
                                     0x33 => self.op_load_bcd_reg(instruction),
-                                    _ => panic!("Keyboard and bulk copy not implemented!")
+                                    0x55 => self.op_store_regs_i(instruction),
+                                    0x65 => self.op_load_regs_i(instruction),
+                                    _ => panic!("Undefined instruction {:x}", instruction)
                               }
                         },
                         _ => panic!("dunno")
@@ -224,6 +229,11 @@ impl Chip {
 
             if self.program_counter == 4094 {
                   println!("Finished memory!");
+                  self.running = false;
+                  return
+            }
+            if self.program_counter - PROGRAM_BASE >= self.rom_size as u16 {
+                  println!("Finished ROM!");
                   self.running = false;
                   return
             }
@@ -263,6 +273,7 @@ impl Chip {
             let mut file = File::open(rom).unwrap();
             let mut contents = Vec::new();
             file.read_to_end(&mut contents).unwrap();
+            self.rom_size = contents.len();
 
             for i in 0..contents.len() {
                   self.memory[PROGRAM_BASE as usize + i] = contents[i];
@@ -492,8 +503,26 @@ impl Chip {
       fn op_load_bcd_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = self.load(rx) as f32;
-            self.memory[self.index as usize]     = (val / 100.0).floor() as u8 % 10;
-            self.memory[(self.index+1) as usize] = (val / 10.0).floor() as u8 % 10;
-            self.memory[(self.index+2) as usize] = val as u8 % 10;
+
+            let hundreds = (val / 100.0).floor() as u8 % 10;
+            let tens = (val / 10.0).floor() as u8 % 10;
+            let ones = val as u8 % 10;
+
+            self.memory[self.index as usize]     = hundreds;
+            self.memory[(self.index+1) as usize] = tens;
+            self.memory[(self.index+2) as usize] = ones;
+      }
+      fn op_store_regs_i(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            for j in 0..(rx+1) {
+                  self.memory[self.index as usize +j] = self.load(j);
+            }
+      }
+      fn op_load_regs_i(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            for j in 0..(rx+1) {
+                  let val = self.memory[self.index as usize + j];
+                  self.store(j, val);
+            }
       }
 }
