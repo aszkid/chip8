@@ -456,10 +456,20 @@ impl Chip {
             }
       }
       fn op_skp(&mut self, instruction: u16) {
-            println!("Skip if key pressed");
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (self.load(rx) & 0x0F) as usize;
+            
+            if self.keypad[val] == true {
+                  self.program_counter += 2;
+            }
       }
       fn op_sknp(&mut self, instruction: u16) {
-            println!("Skip if key not pressed");
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = (self.load(rx) & 0x0F) as usize;
+            
+            if self.keypad[val] != true {
+                  self.program_counter += 2;
+            }
       }
       fn op_load_dt_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;

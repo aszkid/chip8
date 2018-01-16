@@ -40,6 +40,7 @@ impl DisplaySFML {
 impl Display for DisplaySFML {
       fn update(&mut self, chip: &mut chip8::Chip) {
             use self::sfml::window::{Event, Key};
+
             while let Some(ev) = self.window.poll_event() {
                   match ev {
                         Event::Closed => self.window.close(),
@@ -67,6 +68,24 @@ impl Display for DisplaySFML {
                         _ => ()
                   }
             }
+
+            // Update keypad state
+            chip.keypad[0x0] = Key::Numpad0.is_pressed();
+            chip.keypad[0x1] = Key::Numpad1.is_pressed();
+            chip.keypad[0x2] = Key::Numpad2.is_pressed();
+            chip.keypad[0x3] = Key::Numpad3.is_pressed();
+            chip.keypad[0x4] = Key::Numpad4.is_pressed();
+            chip.keypad[0x5] = Key::Numpad5.is_pressed();
+            chip.keypad[0x6] = Key::Numpad6.is_pressed();
+            chip.keypad[0x7] = Key::Numpad7.is_pressed();
+            chip.keypad[0x8] = Key::Numpad8.is_pressed();
+            chip.keypad[0x9] = Key::Numpad9.is_pressed();
+            chip.keypad[0xA] = Key::A.is_pressed();
+            chip.keypad[0xB] = Key::B.is_pressed();
+            chip.keypad[0xC] = Key::C.is_pressed();
+            chip.keypad[0xD] = Key::D.is_pressed();
+            chip.keypad[0xE] = Key::E.is_pressed();
+            chip.keypad[0xF] = Key::F.is_pressed();
       }
       fn draw(&mut self, chip: &chip8::Chip) {
             use self::sfml::graphics::{RenderTarget, Transformable};
