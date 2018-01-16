@@ -16,7 +16,7 @@ const STACK_SIZE: usize = 16;
 const PROGRAM_BASE: u16 = 0x200;
 const DISPLAY_W: usize = 64;
 const DISPLAY_H: usize = 32;
-const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
+pub const DISPLAY_SIZE: usize = DISPLAY_W * DISPLAY_H;
 
 const FONT_SET: [u8; 80] = [
       0xF0, 0x90, 0x90, 0x90, 0xF0,
@@ -62,15 +62,15 @@ fn sub_borrow(a: u8, b: u8) -> (u8, u8) {
 }
 
 pub struct Chip {
-      memory: [u8; MEMORY_SIZE],
-      registers: [u8; NUM_REGISTERS],
-      running: bool,
-      stack: [u16; STACK_SIZE],
-      stack_pointer: u8,
-      program_counter: u16,
-      rom: String,
-      index: u16,
-      display: [u8; DISPLAY_SIZE]
+      pub memory: [u8; MEMORY_SIZE],
+      pub registers: [u8; NUM_REGISTERS],
+      pub running: bool,
+      pub stack: [u16; STACK_SIZE],
+      pub stack_pointer: u8,
+      pub program_counter: u16,
+      pub rom: String,
+      pub index: u16,
+      pub display: [u8; DISPLAY_SIZE]
 }
 
 impl Chip {
@@ -101,14 +101,7 @@ impl Chip {
             self.registers[0xF]
       }
 
-      pub fn run(&mut self) {
-            while self.running {
-                  self.cycle();
-                  // TODO; batch sleep for every X cycles to avoid calling `sleep` too many times
-                  thread::sleep(Duration::from_millis(2))
-            }
-      }
-      fn cycle(&mut self) {
+      pub fn cycle(&mut self) {
             let high: u16 = self.memory[self.program_counter as usize] as u16;
             let low: u16 = self.memory[(self.program_counter + 1) as usize] as u16;
 

@@ -5,6 +5,4 @@ authors = ["Pol Gómez Riquelme <gomezp@uchicago.edu>"]
 
 [dependencies]
 rand = "0.4"
-glium_sdl2 = "0.15"
-sdl2 = "0.30"
-glium = "*"
+sfml = "0.14.0"
