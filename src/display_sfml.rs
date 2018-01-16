@@ -44,7 +44,7 @@ impl Display for DisplaySFML {
                   }
             }
       }
-      fn draw(&mut self, video: &[u8; chip8::DISPLAY_SIZE]) {
+      fn draw(&mut self, video: &[bool; chip8::DISPLAY_SIZE]) {
             use self::sfml::graphics::{RenderTarget, Transformable};
 
             for i in 0..chip8::DISPLAY_SIZE {
@@ -56,9 +56,9 @@ impl Display for DisplaySFML {
                   self.texture_data[i*4+1] = 0;
                   self.texture_data[i*4+2] = 0;
                   self.texture_data[i*4+3] = 255;*/
-                  self.texture_data[i*4] = video[i];
-                  self.texture_data[i*4+1] = video[i];
-                  self.texture_data[i*4+2] = video[i];
+                  self.texture_data[i*4] = if video[i] { 255 } else { 0 };
+                  self.texture_data[i*4+1] = if video[i] { 255 } else { 0 };
+                  self.texture_data[i*4+2] = if video[i] { 255 } else { 0 };
                   self.texture_data[i*4+3] = 255;
             }
             self.texture.update_from_pixels(&self.texture_data, chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32, 0, 0);

@@ -70,7 +70,7 @@ pub struct Chip {
       pub program_counter: u16,
       pub rom: String,
       pub index: u16,
-      pub display: [u8; DISPLAY_SIZE]
+      pub display: [bool; DISPLAY_SIZE]
 }
 
 impl Chip {
@@ -84,17 +84,21 @@ impl Chip {
                   program_counter: PROGRAM_BASE,
                   rom: String::from(""),
                   index: 0,
-                  display: [0; DISPLAY_SIZE]
+                  display: [false; DISPLAY_SIZE]
             };
             c.reset();
             c
       }
 
-      fn display_read(&self, x: usize, y: usize) -> u8 {
-            self.display[y * DISPLAY_W + x]
-      }
       fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) {
-            self.display[y * DISPLAY_W + x] ^= byte;
+            self.display[y * DISPLAY_W + x] ^= (byte & 0b10000000) != 0;
+            self.display[y * DISPLAY_W + x + 1] ^= (byte & 0b01000000) != 0;
+            self.display[y * DISPLAY_W + x + 2] ^= (byte & 0b00100000) != 0;
+            self.display[y * DISPLAY_W + x + 3] ^= (byte & 0b00010000) != 0;
+            self.display[y * DISPLAY_W + x + 4] ^= (byte & 0b00001000) != 0;
+            self.display[y * DISPLAY_W + x + 5] ^= (byte & 0b00000100) != 0;
+            self.display[y * DISPLAY_W + x + 6] ^= (byte & 0b00000010) != 0;
+            self.display[y * DISPLAY_W + x + 7] ^= (byte & 0b00000001) != 0;
       }
 
       fn set_flag(&mut self, val: u8) {
@@ -204,7 +208,7 @@ impl Chip {
             self.stack_pointer = 0;
             self.program_counter = PROGRAM_BASE;
             self.index = 0;
-            self.display = [0; DISPLAY_SIZE];
+            self.display = [false; DISPLAY_SIZE];
       }
 
       pub fn load_rom(&mut self, rom: &str) {
@@ -233,7 +237,7 @@ impl Chip {
        * Instruction implementations.
        */
       fn op_clearsrc(&mut self) {
-            self.display = [0; DISPLAY_SIZE];
+            self.display = [false; DISPLAY_SIZE];
       }
       fn op_ret(&mut self) {
             println!("Subroutine return");
