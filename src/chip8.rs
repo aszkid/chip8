@@ -4,6 +4,7 @@
 * http://stevelosh.com/blog/2016/12/chip8-cpu/ -- a chip8 emulator in commmon lisp
 */
 extern crate rand;
+extern crate time;
 
 use std::time::Duration;
 use std::thread;
@@ -70,7 +71,10 @@ pub struct Chip {
       pub program_counter: u16,
       pub rom: String,
       pub index: u16,
-      pub display: [bool; DISPLAY_SIZE]
+      pub display: [bool; DISPLAY_SIZE],
+      pub clock: u64,
+      pub delay_timer: u8,
+      pub sound_timer: u8
 }
 
 impl Chip {
@@ -84,7 +88,10 @@ impl Chip {
                   program_counter: PROGRAM_BASE,
                   rom: String::from(""),
                   index: 0,
-                  display: [false; DISPLAY_SIZE]
+                  display: [false; DISPLAY_SIZE],
+                  clock: time::precise_time_ns(),
+                  delay_timer: 0,
+                  sound_timer: 0
             };
             c.reset();
             c
@@ -115,6 +122,18 @@ impl Chip {
             let mut instruction: u16 = 0;
             instruction |= high << 8;
             instruction |= low;
+
+            // Delay & sound timers are decreased by 1 at a rate of 60Hz
+            let now = time::precise_time_ns();
+            if now - self.clock > 16666000 {
+                  self.clock = now;
+                  if self.delay_timer != 0 {
+                        self.delay_timer -= 1;
+                  }
+                  if self.sound_timer != 0 {
+                        self.sound_timer -= 1;
+                  }
+            }
 
             if instruction != 0 {
                   match instruction & 0xF000 {
@@ -209,6 +228,9 @@ impl Chip {
             self.program_counter = PROGRAM_BASE;
             self.index = 0;
             self.display = [false; DISPLAY_SIZE];
+            self.clock = time::precise_time_ns();
+            self.delay_timer = 0;
+            self.sound_timer = 0;
       }
 
       pub fn load_rom(&mut self, rom: &str) {
