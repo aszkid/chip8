@@ -1,4 +1,5 @@
 extern crate sfml;
+extern crate time;
 
 use chip8;
 use display::Display;
@@ -17,6 +18,7 @@ impl DisplaySFML {
       pub fn new() -> DisplaySFML {
             use self::sfml::window::{Event, Style};
             use self::sfml::graphics::RenderWindow;
+
             let mut window = RenderWindow::new(
                   (WINDOW_W as u32, WINDOW_H as u32),
                   "CHIP-8",
@@ -28,7 +30,7 @@ impl DisplaySFML {
             let mut disp = DisplaySFML {
                   window,
                   texture_data: [0; chip8::DISPLAY_SIZE * 4],
-                  texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap() 
+                  texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap()
             };
             disp.texture.set_repeated(false);
             return disp;
@@ -47,15 +49,9 @@ impl Display for DisplaySFML {
       fn draw(&mut self, video: &[bool; chip8::DISPLAY_SIZE]) {
             use self::sfml::graphics::{RenderTarget, Transformable};
 
+            let bstart = time::PreciseTime::now();
+
             for i in 0..chip8::DISPLAY_SIZE {
-                  /*self.texture_data[i*4] = ((i as f32)/(chip8::DISPLAY_SIZE as f32) * 255.0) as u8;
-                  self.texture_data[i*4+1] = (((i % chip8::DISPLAY_W) as f32)/(chip8::DISPLAY_H as f32) * 255.0) as u8;
-                  self.texture_data[i*4+2] = (((i % chip8::DISPLAY_H) as f32)/(chip8::DISPLAY_W as f32) * 255.0) as u8;
-                  self.texture_data[i*4+3] = 255;*/
-                  /*self.texture_data[i*4] = 255;
-                  self.texture_data[i*4+1] = 0;
-                  self.texture_data[i*4+2] = 0;
-                  self.texture_data[i*4+3] = 255;*/
                   self.texture_data[i*4] = if video[i] { 255 } else { 0 };
                   self.texture_data[i*4+1] = if video[i] { 255 } else { 0 };
                   self.texture_data[i*4+2] = if video[i] { 255 } else { 0 };
@@ -66,6 +62,9 @@ impl Display for DisplaySFML {
             sprite.set_scale(sfml::system::Vector2f::new(12.5, 12.5));
             self.window.draw(&sprite);
             self.window.display();
+
+            let bend = time::PreciseTime::now();
+            println!("{} millis", bstart.to(bend).num_milliseconds());
       }
       fn should_close(&self) -> bool {
             !self.window.is_open()
