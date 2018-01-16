@@ -214,6 +214,7 @@ impl Chip {
                                     0x18 => self.op_load_st_reg(instruction),
                                     0x1E => self.op_add_i_reg(instruction),
                                     0x29 => self.op_load_font_reg(instruction),
+                                    0x33 => self.op_load_bcd_reg(instruction),
                                     _ => panic!("Keyboard and bulk copy not implemented!")
                               }
                         },
@@ -275,10 +276,10 @@ impl Chip {
             for i in 0..self.registers.len() {
                   println!(" --> V{:} = {}", i, self.registers[i]);
             }
-            println!(" --> DT = {}", self.delay_timer);
-            println!(" --> ST = {}", self.sound_timer);
-            println!(" --> PC = {}", self.program_counter);
-            println!(" --> I  = {}", self.index);
+            println!(" --> DT  = {}", self.delay_timer);
+            println!(" --> ST  = {}", self.sound_timer);
+            println!(" --> PC  = {}", self.program_counter);
+            println!(" --> I   = {}", self.index);
       }
 
       /**
@@ -487,5 +488,12 @@ impl Chip {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = self.delay_timer;
             self.store(rx, val);
+      }
+      fn op_load_bcd_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = self.load(rx) as f32;
+            self.memory[self.index as usize]     = (val / 100.0).floor() as u8 % 10;
+            self.memory[(self.index+1) as usize] = (val / 10.0).floor() as u8 % 10;
+            self.memory[(self.index+2) as usize] = val as u8 % 10;
       }
 }
