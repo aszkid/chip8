@@ -191,11 +191,13 @@ impl Chip {
                         },
                         0xF000 => {
                               match instruction & 0x00FF {
+                                    0x07 => self.op_load_reg_dt(instruction),
                                     0x0A => self.op_load_reg_key(instruction),
+                                    0x15 => self.op_load_dt_reg(instruction),
                                     0x18 => self.op_load_st_reg(instruction),
                                     0x1E => self.op_add_i_reg(instruction),
                                     0x29 => self.op_load_font_reg(instruction),
-                                    _ => panic!("Timer stuff")
+                                    _ => panic!("Keyboard and bulk copy not implemented!")
                               }
                         },
                         _ => panic!("dunno")
@@ -384,8 +386,9 @@ impl Chip {
             // TODO
       }
       fn op_load_st_reg(&mut self, instruction: u16) {
-            let reg = (instruction & 0x0F00) >> 8;
-            // TODO
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            self.sound_timer = self.load(rx);
+
       }
       fn op_add_i_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -439,5 +442,14 @@ impl Chip {
       }
       fn op_sknp(&mut self, instruction: u16) {
             println!("Skip if key not pressed");
+      }
+      fn op_load_dt_reg(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            self.delay_timer = self.load(rx);
+      }
+      fn op_load_reg_dt(&mut self, instruction: u16) {
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = self.delay_timer;
+            self.store(rx, val);
       }
 }
