@@ -8,11 +8,15 @@ use display::Display;
 
 fn main() {
 
-      // Create gl display
+      let rom = match std::env::args().nth(1) {
+            Some(v) => v,
+            None => panic!("Need ROM to load!")
+      };
+      println!("Playing ROM `{}`", rom);
+
       let mut display = display_sfml::DisplaySFML::new();
-      // Create chip instance
       let mut chip = chip8::Chip::new();
-      chip.load_rom("roms/pong2.rom");
+      chip.load_rom(&format!("roms/{}.rom", &rom));
 
       let mut begin_cpu = time::PreciseTime::now();
       let mut begin_display = begin_cpu.clone();
@@ -35,7 +39,6 @@ fn main() {
 
             let delta_display = begin_display.to(now);
             if delta_display.num_milliseconds() > 16 {
-                  println!("Display tick!");
                   begin_display = now.clone();
 
                   display.draw(&chip);
