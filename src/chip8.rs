@@ -107,9 +107,10 @@ impl Chip {
       }
 
       fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) {
-            println!("Writing byte {:b} starting at {}", byte, y * DISPLAY_W + x);
+            // TODO:
+            // 1 - wrap around
+            // 2 - set VF if pixel erased
             let mut idx = y * DISPLAY_W + x;
-
             for j in 0..8 {
                   if idx < DISPLAY_SIZE {
                         let mask = 0b00000001 << (7 - j);
@@ -234,10 +235,7 @@ impl Chip {
                   println!("Finished ROM!");
                   self.running = false;
                   return
-            }
-
-            // each instruction takes care of this now!
-            //self.program_counter += 2;
+            } 
       }
 
       fn store(&mut self, reg: usize, val: u8) {
@@ -307,7 +305,6 @@ impl Chip {
       fn op_jump_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.program_counter = addr;
-            println!("Jumping to {:x}", addr);
       }
       fn op_call(&mut self, instruction: u16) {
             if self.stack_pointer >= STACK_SIZE {
@@ -426,8 +423,6 @@ impl Chip {
             let pos_x = self.load(rx) as usize;
             let pos_y = self.load(ry) as usize;
 
-            println!("Drawing {} bytes starting at I = {}, pos ({},{})", bytes, self.index, pos_x, pos_y);
-
             let src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
             for i in 0..src.len() {
                   self.display_write_byte(pos_x, pos_y + i, src[i]);
@@ -445,7 +440,6 @@ impl Chip {
 
                         self.wait = 0x10;
                         self.key_pressed = 0x10;
-                        println!("Got it!");
                         self.program_counter += 2;
                   }
             }
@@ -472,8 +466,6 @@ impl Chip {
       fn op_se_reg_imm(&mut self, instruction: u16) {
             let reg = ((instruction & 0x0F00) >> 8) as usize;
             let val = (instruction & 0x00FF) as u8;
-
-            println!("Skipping next instruction if V{} = {} is equal to {}", reg, self.load(reg), val);
 
             if self.load(reg) == val {
                   self.program_counter += 2;

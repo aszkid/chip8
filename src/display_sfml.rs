@@ -25,8 +25,6 @@ impl DisplaySFML {
                   Style::CLOSE,
                   &Default::default()
             );
-            // too slow, if one frame = one cycle!
-            //window.set_framerate_limit(60);
 
             let mut disp = DisplaySFML {
                   window,
@@ -94,14 +92,18 @@ impl Display for DisplaySFML {
             let bstart = time::PreciseTime::now();
 
             for i in 0..chip8::DISPLAY_SIZE {
-                  self.texture_data[i*4] = if chip.display[i] { 255 } else { 0 };
-                  self.texture_data[i*4+1] = if chip.display[i] { 255 } else { 0 };
-                  self.texture_data[i*4+2] = if chip.display[i] { 255 } else { 0 };
-                  self.texture_data[i*4+3] = 255;
+                  let mut color = [22, 34, 56, 255];
+                  if chip.display[i]  {
+                        color = [116, 163, 252, 255];
+                  }
+                  self.texture_data[i*4] = color[0];
+                  self.texture_data[i*4+1] = color[1];
+                  self.texture_data[i*4+2] = color[2];
+                  self.texture_data[i*4+3] = color[3];
             }
             self.texture.update_from_pixels(&self.texture_data, chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32, 0, 0);
             let mut sprite = sfml::graphics::Sprite::with_texture(&self.texture);
-            sprite.set_scale(sfml::system::Vector2f::new(12.5, 12.5));
+            sprite.set_scale(sfml::system::Vector2f::new(WINDOW_W as f32 / chip8::DISPLAY_W as f32, WINDOW_H as f32 / chip8::DISPLAY_H as f32));
             self.window.draw(&sprite);
             self.window.display();
 
