@@ -107,14 +107,25 @@ impl Chip {
       }
 
       fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) {
-            self.display[y * DISPLAY_W + x] ^= (byte & 0b10000000) != 0;
+            println!("Writing byte {:b} starting at {}", byte, y * DISPLAY_W + x);
+            let mut idx = y * DISPLAY_W + x;
+
+            for j in 0..8 {
+                  idx += 1;
+                  if idx < DISPLAY_SIZE {
+                        let mask = 0b00000001 << (7 - j);
+                        self.display[idx] ^= (byte & mask) != 0;
+                  }
+            }
+
+            /*self.display[y * DISPLAY_W + x] ^= (byte & 0b10000000) != 0;
             self.display[y * DISPLAY_W + x + 1] ^= (byte & 0b01000000) != 0;
             self.display[y * DISPLAY_W + x + 2] ^= (byte & 0b00100000) != 0;
             self.display[y * DISPLAY_W + x + 3] ^= (byte & 0b00010000) != 0;
             self.display[y * DISPLAY_W + x + 4] ^= (byte & 0b00001000) != 0;
             self.display[y * DISPLAY_W + x + 5] ^= (byte & 0b00000100) != 0;
             self.display[y * DISPLAY_W + x + 6] ^= (byte & 0b00000010) != 0;
-            self.display[y * DISPLAY_W + x + 7] ^= (byte & 0b00000001) != 0;
+            self.display[y * DISPLAY_W + x + 7] ^= (byte & 0b00000001) != 0;*/
       }
 
       fn set_flag(&mut self, val: u8) {
@@ -415,9 +426,8 @@ impl Chip {
             let pos_x = self.load(rx) as usize;
             let pos_y = self.load(ry) as usize;
 
-            /*self.display[pos..(pos+bytes)].copy_from_slice(
-                  &self.memory[(self.index as usize)..(self.index as usize +bytes)]
-            );*/
+            println!("Drawing {} bytes starting at I = {}, pos ({},{})", bytes, self.index, pos_x, pos_y);
+
             let src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
             for i in 0..src.len() {
                   self.display_write_byte(pos_x, pos_y + i, src[i]);
