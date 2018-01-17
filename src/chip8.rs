@@ -106,10 +106,10 @@ impl Chip {
             c
       }
 
-      fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) {
+      fn display_write_byte(&mut self, x: usize, y: usize, byte: u8) -> bool {
             // TODO:
             // 1 - wrap around
-            // 2 - set VF if pixel erased
+            // 2 - set VF if pixel erased -- DONE
             let mut idx = y * DISPLAY_W + x;
             let mut overlap = false;
             for j in 0..8 {
@@ -123,7 +123,7 @@ impl Chip {
                         idx += 1;
                   }
             }
-            self.store(0xF, if overlap {0x1} else {0x0});
+            overlap
       }
 
       fn set_flag(&mut self, val: u8) {
@@ -421,10 +421,14 @@ impl Chip {
             let pos_y = self.load(ry) as usize;
 
             let src = self.memory[(self.index as usize)..(self.index as usize + bytes)].to_vec();
+            let mut overlap = false;
             for i in 0..src.len() {
-                  self.display_write_byte(pos_x, pos_y + i, src[i]);
+                  if self.display_write_byte(pos_x, pos_y + i, src[i]) {
+                        overlap = true;
+                  }
             }
 
+            self.store(0xF, if overlap {0x1} else {0x0});
             self.program_counter += 2;
       }
       fn op_load_reg_key(&mut self, instruction: u16) {
