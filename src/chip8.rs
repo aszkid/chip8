@@ -111,10 +111,10 @@ impl Chip {
             let mut idx = y * DISPLAY_W + x;
 
             for j in 0..8 {
-                  idx += 1;
                   if idx < DISPLAY_SIZE {
                         let mask = 0b00000001 << (7 - j);
                         self.display[idx] ^= (byte & mask) != 0;
+                        idx += 1;
                   }
             }
 
