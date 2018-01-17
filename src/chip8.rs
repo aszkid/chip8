@@ -118,15 +118,6 @@ impl Chip {
                         idx += 1;
                   }
             }
-
-            /*self.display[y * DISPLAY_W + x] ^= (byte & 0b10000000) != 0;
-            self.display[y * DISPLAY_W + x + 1] ^= (byte & 0b01000000) != 0;
-            self.display[y * DISPLAY_W + x + 2] ^= (byte & 0b00100000) != 0;
-            self.display[y * DISPLAY_W + x + 3] ^= (byte & 0b00010000) != 0;
-            self.display[y * DISPLAY_W + x + 4] ^= (byte & 0b00001000) != 0;
-            self.display[y * DISPLAY_W + x + 5] ^= (byte & 0b00000100) != 0;
-            self.display[y * DISPLAY_W + x + 6] ^= (byte & 0b00000010) != 0;
-            self.display[y * DISPLAY_W + x + 7] ^= (byte & 0b00000001) != 0;*/
       }
 
       fn set_flag(&mut self, val: u8) {

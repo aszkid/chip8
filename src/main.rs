@@ -30,17 +30,16 @@ fn main() {
                   if chip.running {
                         chip.cycle();
                   }
-
-                  display.update(&mut chip);
-                  if display.should_close() {
-                        break 'running;
-                  }
             }
 
             let delta_display = begin_display.to(now);
             if delta_display.num_milliseconds() > 16 {
                   begin_display = now.clone();
 
+                  display.update(&mut chip);
+                  if display.should_close() {
+                        break 'running;
+                  }
                   display.draw(&chip);
             }
       }
