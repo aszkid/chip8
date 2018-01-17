@@ -111,13 +111,19 @@ impl Chip {
             // 1 - wrap around
             // 2 - set VF if pixel erased
             let mut idx = y * DISPLAY_W + x;
+            let mut overlap = false;
             for j in 0..8 {
                   if idx < DISPLAY_SIZE {
                         let mask = 0b00000001 << (7 - j);
+                        let old = self.display[idx].clone();
                         self.display[idx] ^= (byte & mask) != 0;
+                        if old == true && self.display[idx] == false {
+                              overlap = true;
+                        }
                         idx += 1;
                   }
             }
+            self.store(0xF, if overlap {0x1} else {0x0});
       }
 
       fn set_flag(&mut self, val: u8) {
