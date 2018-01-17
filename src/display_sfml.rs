@@ -25,7 +25,8 @@ impl DisplaySFML {
                   Style::CLOSE,
                   &Default::default()
             );
-            window.set_framerate_limit(60);
+            // too slow, if one frame = one cycle!
+            //window.set_framerate_limit(60);
 
             let mut disp = DisplaySFML {
                   window,

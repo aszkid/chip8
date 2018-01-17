@@ -290,7 +290,7 @@ impl Chip {
             self.program_counter += 2;
       }
       fn op_ret(&mut self) {
-            self.program_counter = self.stack[self.stack_pointer-1];
+            self.program_counter = self.stack[self.stack_pointer-1] + 2;
             self.stack_pointer -= 1;
       }
       fn op_jump_imm(&mut self, instruction: u16) {
@@ -492,10 +492,13 @@ impl Chip {
             self.program_counter += 2;
       }
       fn op_add_reg_imm(&mut self, instruction: u16) {
-            let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let val = (instruction & 0x00FF) as u8 + self.load(rx);
+            use std::num::Wrapping;
 
-            self.store(rx, val);
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
+            let val = Wrapping((instruction & 0x00FF) as u8);
+            let result = val + Wrapping(self.load(rx));
+
+            self.store(rx, result.0);
             self.program_counter += 2;
       }
       fn op_sne_reg_reg(&mut self, instruction: u16) {
