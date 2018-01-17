@@ -140,19 +140,6 @@ impl Chip {
                         self.sound_timer -= 1;
                   }
             }
-            
-            if self.wait != 0x10 {
-                  if self.key_pressed != 0x10 {
-                        let wait = self.wait.clone();
-                        let key = self.key_pressed.clone();
-                        self.store(wait as usize, key as u8);
-                        self.wait = 0x10;
-                        self.key_pressed = 0x10;
-                        println!("Got it!");
-                  } else {
-                        return;
-                  }
-            }
 
             if instruction != 0 {
                   println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
@@ -238,7 +225,8 @@ impl Chip {
                   return
             }
 
-            self.program_counter += 2;
+            // each instruction takes care of this now!
+            //self.program_counter += 2;
       }
 
       fn store(&mut self, reg: usize, val: u8) {
@@ -298,6 +286,8 @@ impl Chip {
        */
       fn op_clearsrc(&mut self) {
             self.display = [false; DISPLAY_SIZE];
+
+            self.program_counter += 2;
       }
       fn op_ret(&mut self) {
             self.program_counter = self.stack[self.stack_pointer-1];
@@ -306,6 +296,7 @@ impl Chip {
       fn op_jump_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.program_counter = addr;
+            println!("Jumping to {:x}", addr);
       }
       fn op_call(&mut self, instruction: u16) {
             if self.stack_pointer >= STACK_SIZE {
@@ -321,6 +312,7 @@ impl Chip {
             let val = (instruction & 0x00FF) as u8;
             
             self.store(reg, val);
+            self.program_counter += 2;
       }
       fn op_load_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -328,6 +320,7 @@ impl Chip {
             let val = self.load(ry);
 
             self.store(rx, val);
+            self.program_counter += 2;
       }
       fn op_or(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -335,6 +328,7 @@ impl Chip {
             let val = self.load(rx) | self.load(ry);
 
             self.store(rx, val);
+            self.program_counter += 2;
       }
       fn op_and(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -342,6 +336,7 @@ impl Chip {
             let val = self.load(rx) & self.load(ry);
 
             self.store(rx, val);
+            self.program_counter += 2;
       }
       fn op_xor(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -349,6 +344,7 @@ impl Chip {
             let val = self.load(rx) ^ self.load(ry);
 
             self.store(rx, val);
+            self.program_counter += 2;
       }
       fn op_add_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -357,6 +353,7 @@ impl Chip {
 
             self.store(rx, val);
             self.set_flag(carry);
+            self.program_counter += 2;
       }
       fn op_sub_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -365,6 +362,7 @@ impl Chip {
 
             self.store(rx, val);
             self.set_flag(borrow);
+            self.program_counter += 2;
       }
       fn op_shr(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -374,6 +372,7 @@ impl Chip {
             // extract lsb
             self.set_flag(val & 0x0001);
             self.store(rx, val >> 1);
+            self.program_counter += 2;
       }
       fn op_subn_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -382,6 +381,7 @@ impl Chip {
 
             self.store(rx, val);
             self.set_flag(borrow);
+            self.program_counter += 2;
       }
       fn op_shl(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -391,10 +391,12 @@ impl Chip {
             // extract msb
             self.set_flag(val >> 7);
             self.store(rx, val << 1);
+            self.program_counter += 2;
       }
       fn op_load_i_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.index = addr;
+            self.program_counter += 2;
       }
       fn op_jump_imm_plus(&mut self, instruction: u16) {
             self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
@@ -404,6 +406,7 @@ impl Chip {
             let mask = (instruction & 0x00FF) as u8;
 
             self.store(rx, rand::random::<u8>() & mask);
+            self.program_counter += 2;
       }
       fn op_draw(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -419,31 +422,54 @@ impl Chip {
             for i in 0..src.len() {
                   self.display_write_byte(pos_x, pos_y + i, src[i]);
             }
+
+            self.program_counter += 2;
       }
       fn op_load_reg_key(&mut self, instruction: u16) {
             self.wait = ((instruction & 0x0F00) >> 8) as u8;
+            if self.wait != 0x10 {
+                  if self.key_pressed != 0x10 {
+                        let wait = self.wait.clone();
+                        let key = self.key_pressed.clone();
+                        self.store(wait as usize, key as u8);
+
+                        self.wait = 0x10;
+                        self.key_pressed = 0x10;
+                        println!("Got it!");
+                        self.program_counter += 2;
+                  }
+            }
       }
       fn op_load_st_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             self.sound_timer = self.load(rx);
 
+            self.program_counter += 2;
       }
       fn op_add_i_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             self.index += self.load(rx) as u16;
+
+            self.program_counter += 2;
       }
       fn op_load_font_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let digit = self.load(rx);
             self.index = (digit as u16) * 5;
+
+            self.program_counter += 2;
       }
       fn op_se_reg_imm(&mut self, instruction: u16) {
             let reg = ((instruction & 0x0F00) >> 8) as usize;
             let val = (instruction & 0x00FF) as u8;
 
+            println!("Skipping next instruction if V{} = {} is equal to {}", reg, self.load(reg), val);
+
             if self.load(reg) == val {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_sne_reg_imm(&mut self, instruction: u16) {
             let reg = ((instruction & 0x0F00) >> 8) as usize;
@@ -452,6 +478,8 @@ impl Chip {
             if self.load(reg) != val {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_se_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -460,12 +488,15 @@ impl Chip {
             if self.load(rx) == self.load(ry) {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_add_reg_imm(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = (instruction & 0x00FF) as u8 + self.load(rx);
 
             self.store(rx, val);
+            self.program_counter += 2;
       }
       fn op_sne_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -474,6 +505,8 @@ impl Chip {
             if self.load(rx) != self.load(ry) {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_skp(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -482,6 +515,8 @@ impl Chip {
             if self.keypad[val] == true {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_sknp(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -490,15 +525,21 @@ impl Chip {
             if self.keypad[val] != true {
                   self.program_counter += 2;
             }
+
+            self.program_counter += 2;
       }
       fn op_load_dt_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             self.delay_timer = self.load(rx);
+
+            self.program_counter += 2;
       }
       fn op_load_reg_dt(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = self.delay_timer;
             self.store(rx, val);
+
+            self.program_counter += 2;
       }
       fn op_load_bcd_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -511,12 +552,16 @@ impl Chip {
             self.memory[self.index as usize]     = hundreds;
             self.memory[(self.index+1) as usize] = tens;
             self.memory[(self.index+2) as usize] = ones;
+
+            self.program_counter += 2;
       }
       fn op_store_regs_i(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             for j in 0..(rx+1) {
                   self.memory[self.index as usize +j] = self.load(j);
             }
+
+            self.program_counter += 2;
       }
       fn op_load_regs_i(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
@@ -524,5 +569,7 @@ impl Chip {
                   let val = self.memory[self.index as usize + j];
                   self.store(j, val);
             }
+
+            self.program_counter += 2;
       }
 }
