@@ -150,77 +150,75 @@ impl Chip {
                   }
             }
 
-            if instruction != 0 {
-                  println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
-                  match instruction & 0xF000 {
-                        0x0000 => {
-                              match instruction {
-                                    0xE0 => self.op_clearsrc(),
-                                    0xEE => self.op_ret(),
-                                    _ => panic!("Execute machine language subroutine unsupported.")
-                              }
-                        },
-                        0x1000 => self.op_jump_imm(instruction),
-                        0x2000 => self.op_call(instruction),
-                        0x3000 => self.op_se_reg_imm(instruction),
-                        0x4000 => self.op_sne_reg_imm(instruction),
-                        0x5000 => {
-                              if instruction & 0x000F == 0 {
-                                    self.op_se_reg_reg(instruction);
-                              } else {
-                                    panic!("Undefined instrution {:x}", instruction);
-                              }
-                        },
-                        0x6000 => self.op_load_reg_imm(instruction),
-                        0x7000 => self.op_add_reg_imm(instruction),
-                        0x8000 => {
-                              match instruction & 0x000F {
-                                    0x0 => self.op_load_reg_reg(instruction),
-                                    0x1 => self.op_or(instruction),
-                                    0x2 => self.op_and(instruction),
-                                    0x3 => self.op_xor(instruction),
-                                    0x4 => self.op_add_reg_reg(instruction),
-                                    0x5 => self.op_sub_reg_reg(instruction),
-                                    0x6 => self.op_shr(instruction),
-                                    0x7 => self.op_subn_reg_reg(instruction),
-                                    0xE => self.op_shl(instruction),
-                                    _ => panic!("Instruction {:x} unimplemented", instruction)
-                              }
-                        },
-                        0x9000 => {
-                              if instruction & 0x000F == 0{
-                                    self.op_sne_reg_reg(instruction);
-                              } else {
-                                    panic!("Undefined instruction {:x}", instruction);
-                              }
-                        },
-                        0xA000 => self.op_load_i_imm(instruction),
-                        0xB000 => self.op_jump_imm_plus(instruction),
-                        0xC000 => self.op_rand(instruction),
-                        0xD000 => self.op_draw(instruction),
-                        0xE000 => {
-                              match instruction & 0x00FF {
-                                    0x9E => self.op_skp(instruction),
-                                    0xA1 => self.op_sknp(instruction),
-                                    _ => panic!("Undefined instruction {:x}", instruction)
-                              }
-                        },
-                        0xF000 => {
-                              match instruction & 0x00FF {
-                                    0x07 => self.op_load_reg_dt(instruction),
-                                    0x0A => self.op_load_reg_key(instruction),
-                                    0x15 => self.op_load_dt_reg(instruction),
-                                    0x18 => self.op_load_st_reg(instruction),
-                                    0x1E => self.op_add_i_reg(instruction),
-                                    0x29 => self.op_load_font_reg(instruction),
-                                    0x33 => self.op_load_bcd_reg(instruction),
-                                    0x55 => self.op_store_regs_i(instruction),
-                                    0x65 => self.op_load_regs_i(instruction),
-                                    _ => panic!("Undefined instruction {:x}", instruction)
-                              }
-                        },
-                        _ => panic!("dunno")
-                  }
+            println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
+            match instruction & 0xF000 {
+                  0x0000 => {
+                        match instruction {
+                              0xE0 => self.op_clearsrc(),
+                              0xEE => self.op_ret(),
+                              _ => panic!("Execute machine language subroutine unsupported.")
+                        }
+                  },
+                  0x1000 => self.op_jump_imm(instruction),
+                  0x2000 => self.op_call(instruction),
+                  0x3000 => self.op_se_reg_imm(instruction),
+                  0x4000 => self.op_sne_reg_imm(instruction),
+                  0x5000 => {
+                        if instruction & 0x000F == 0 {
+                              self.op_se_reg_reg(instruction);
+                        } else {
+                              panic!("Undefined instrution {:x}", instruction);
+                        }
+                  },
+                  0x6000 => self.op_load_reg_imm(instruction),
+                  0x7000 => self.op_add_reg_imm(instruction),
+                  0x8000 => {
+                        match instruction & 0x000F {
+                              0x0 => self.op_load_reg_reg(instruction),
+                              0x1 => self.op_or(instruction),
+                              0x2 => self.op_and(instruction),
+                              0x3 => self.op_xor(instruction),
+                              0x4 => self.op_add_reg_reg(instruction),
+                              0x5 => self.op_sub_reg_reg(instruction),
+                              0x6 => self.op_shr(instruction),
+                              0x7 => self.op_subn_reg_reg(instruction),
+                              0xE => self.op_shl(instruction),
+                              _ => panic!("Instruction {:x} unimplemented", instruction)
+                        }
+                  },
+                  0x9000 => {
+                        if instruction & 0x000F == 0{
+                              self.op_sne_reg_reg(instruction);
+                        } else {
+                              panic!("Undefined instruction {:x}", instruction);
+                        }
+                  },
+                  0xA000 => self.op_load_i_imm(instruction),
+                  0xB000 => self.op_jump_imm_plus(instruction),
+                  0xC000 => self.op_rand(instruction),
+                  0xD000 => self.op_draw(instruction),
+                  0xE000 => {
+                        match instruction & 0x00FF {
+                              0x9E => self.op_skp(instruction),
+                              0xA1 => self.op_sknp(instruction),
+                              _ => panic!("Undefined instruction {:x}", instruction)
+                        }
+                  },
+                  0xF000 => {
+                        match instruction & 0x00FF {
+                              0x07 => self.op_load_reg_dt(instruction),
+                              0x0A => self.op_load_reg_key(instruction),
+                              0x15 => self.op_load_dt_reg(instruction),
+                              0x18 => self.op_load_st_reg(instruction),
+                              0x1E => self.op_add_i_reg(instruction),
+                              0x29 => self.op_load_font_reg(instruction),
+                              0x33 => self.op_load_bcd_reg(instruction),
+                              0x55 => self.op_store_regs_i(instruction),
+                              0x65 => self.op_load_regs_i(instruction),
+                              _ => panic!("Undefined instruction {:x}", instruction)
+                        }
+                  },
+                  _ => panic!("dunno")
             }
 
             if self.program_counter == 4094 {

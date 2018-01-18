@@ -16,7 +16,7 @@ fn main() {
 
       let mut display = display_sfml::DisplaySFML::new();
       let mut chip = chip8::Chip::new();
-      chip.load_rom(&format!("roms/{}.rom", &rom));
+      chip.load_rom(&format!("roms/{}", &rom));
 
       let mut begin_cpu = time::PreciseTime::now();
       let mut begin_display = begin_cpu.clone();
@@ -24,7 +24,7 @@ fn main() {
             let now = time::PreciseTime::now();
 
             let delta_cpu = begin_cpu.to(now);
-            if delta_cpu.num_milliseconds() > 2 {
+            if delta_cpu.num_milliseconds() >= 2 {
                   begin_cpu = now.clone();
 
                   if chip.running {

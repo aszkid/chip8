@@ -8,6 +8,35 @@ const WINDOW_W: usize = 800;
 const WINDOW_H: usize = 400;
 const WINDOW_LEN: usize = WINDOW_W * WINDOW_H; 
 
+use self::sfml::window::Key;
+const KEY_BINDINGS: [(u8, Key); 16] = [
+      (0x1, Key::Num1),
+      (0x2, Key::Num2),
+      (0x3, Key::Num3),
+      (0xC, Key::Num4),
+      (0x4, Key::Q),
+      (0x5, Key::W),
+      (0x6, Key::E),
+      (0xD, Key::R),
+      (0x7, Key::A),
+      (0x8, Key::S),
+      (0x9, Key::D),
+      (0xE, Key::F),
+      (0xA, Key::Z),
+      (0x0, Key::X),
+      (0xB, Key::C),
+      (0xF, Key::V)
+];
+
+fn key_local_to_chip(k: Key) -> Option<u8> {
+      for pair in KEY_BINDINGS.iter() {
+            if pair.1 == k {
+                  return Some(pair.0);
+            }
+      }
+      None
+}
+
 pub struct DisplaySFML {
       window: sfml::graphics::RenderWindow,
       texture_data: [u8; chip8::DISPLAY_SIZE * 4],
@@ -44,52 +73,21 @@ impl Display for DisplaySFML {
                   match ev {
                         Event::Closed => self.window.close(),
                         Event::KeyPressed { code, .. } => {
-                              chip.key_pressed = match code {
-                                    Key::Numpad0 => 0x0,
-                                    Key::Numpad1 => 0x1,
-                                    Key::Numpad2 => 0x2,
-                                    Key::Numpad3 => 0x3,
-                                    Key::Numpad4 => 0x4,
-                                    Key::Numpad5 => 0x5,
-                                    Key::Numpad6 => 0x6,
-                                    Key::Numpad7 => 0x7,
-                                    Key::Numpad8 => 0x8,
-                                    Key::Numpad9 => 0x9,
-                                    Key::A => 0xA,
-                                    Key::B => 0xB,
-                                    Key::C => 0xC,
-                                    Key::D => 0xD,
-                                    Key::E => 0xE,
-                                    Key::F => 0xF,
-                                    _ => 0x10
-                              };
+                              if let Some(key) = key_local_to_chip(code) {
+                                    chip.key_pressed = key;
+                              }
                         },
                         _ => ()
                   }
             }
 
             // Update keypad state
-            chip.keypad[0x0] = Key::Numpad0.is_pressed();
-            chip.keypad[0x1] = Key::Numpad1.is_pressed();
-            chip.keypad[0x2] = Key::Numpad2.is_pressed();
-            chip.keypad[0x3] = Key::Numpad3.is_pressed();
-            chip.keypad[0x4] = Key::Numpad4.is_pressed();
-            chip.keypad[0x5] = Key::Numpad5.is_pressed();
-            chip.keypad[0x6] = Key::Numpad6.is_pressed();
-            chip.keypad[0x7] = Key::Numpad7.is_pressed();
-            chip.keypad[0x8] = Key::Numpad8.is_pressed();
-            chip.keypad[0x9] = Key::Numpad9.is_pressed();
-            chip.keypad[0xA] = Key::A.is_pressed();
-            chip.keypad[0xB] = Key::B.is_pressed();
-            chip.keypad[0xC] = Key::C.is_pressed();
-            chip.keypad[0xD] = Key::D.is_pressed();
-            chip.keypad[0xE] = Key::E.is_pressed();
-            chip.keypad[0xF] = Key::F.is_pressed();
+            for pair in KEY_BINDINGS.iter() {
+                  chip.keypad[pair.0 as usize] = pair.1.is_pressed();
+            }
       }
       fn draw(&mut self, chip: &chip8::Chip) {
             use self::sfml::graphics::{RenderTarget, Transformable};
-
-            let bstart = time::PreciseTime::now();
 
             for i in 0..chip8::DISPLAY_SIZE {
                   let mut color = [22, 34, 56, 255];
@@ -106,9 +104,6 @@ impl Display for DisplaySFML {
             sprite.set_scale(sfml::system::Vector2f::new(WINDOW_W as f32 / chip8::DISPLAY_W as f32, WINDOW_H as f32 / chip8::DISPLAY_H as f32));
             self.window.draw(&sprite);
             self.window.display();
-
-            let bend = time::PreciseTime::now();
-            //println!("{} millis", bstart.to(bend).num_milliseconds());
       }
       fn should_close(&self) -> bool {
             !self.window.is_open()
