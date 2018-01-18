@@ -288,19 +288,23 @@ impl Chip {
       /**
        * Instruction implementations.
        */
+      // 00E0 - CLS
       fn op_clearsrc(&mut self) {
             self.display = [false; DISPLAY_SIZE];
 
             self.program_counter += 2;
       }
+      // 00EE - RET
       fn op_ret(&mut self) {
             self.program_counter = self.stack[self.stack_pointer-1]/* + 2*/;
             self.stack_pointer -= 1;
       }
+      // 1nnn - JP addr
       fn op_jump_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.program_counter = addr;
       }
+      // 2nnn - CALL addr
       fn op_call(&mut self, instruction: u16) {
             if self.stack_pointer >= STACK_SIZE {
                   panic!("Stack overflow!");
@@ -310,13 +314,15 @@ impl Chip {
             self.program_counter = addr;
             self.stack_pointer += 1;
       }
+      // 6xkk - LD Vx, byte
       fn op_load_reg_imm(&mut self, instruction: u16) {
-            let reg = ((instruction & 0x0F00) >> 8) as usize;
+            let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = (instruction & 0x00FF) as u8;
             
-            self.store(reg, val);
+            self.store(rx, val);
             self.program_counter += 2;
       }
+      // 8xy0 - LD Vx, Vy
       fn op_load_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -325,6 +331,7 @@ impl Chip {
             self.store(rx, val);
             self.program_counter += 2;
       }
+      // 8xy1 - OR Vx, Vy
       fn op_or(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -333,6 +340,7 @@ impl Chip {
             self.store(rx, val);
             self.program_counter += 2;
       }
+      // 8xy2 - AND Vx, Vy
       fn op_and(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -341,6 +349,7 @@ impl Chip {
             self.store(rx, val);
             self.program_counter += 2;
       }
+      // 8xy3 - XOR Vx, Vy
       fn op_xor(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -349,6 +358,7 @@ impl Chip {
             self.store(rx, val);
             self.program_counter += 2;
       }
+      // 8xy4 - ADD Vx, Vy
       fn op_add_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
