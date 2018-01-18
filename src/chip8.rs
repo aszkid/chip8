@@ -53,14 +53,14 @@ fn add_carry(a: u8, b: u8) -> (u8, u8) {
       }
 }
 fn sub_borrow(a: u8, b: u8) -> (u8, u8) {
-      let under = b > a;
-      let res = if under {
-            0xFF - (b - a) + 1
-      } else {
+      let not_borrow = a > b;
+      let res = if a >= b {
             a - b
+      } else {
+            0xFF - (b - a) + 1
       };
 
-      (res, if under {0x0} else {0x1})
+      (res, if not_borrow {0x1} else {0x0})
 }
 
 pub struct Chip {
@@ -294,7 +294,7 @@ impl Chip {
             self.program_counter += 2;
       }
       fn op_ret(&mut self) {
-            self.program_counter = self.stack[self.stack_pointer-1] + 2;
+            self.program_counter = self.stack[self.stack_pointer-1]/* + 2*/;
             self.stack_pointer -= 1;
       }
       fn op_jump_imm(&mut self, instruction: u16) {
@@ -306,7 +306,7 @@ impl Chip {
                   panic!("Stack overflow!");
             }
             let addr = (instruction & 0x0FFF) as u16;
-            self.stack[self.stack_pointer] = self.program_counter;
+            self.stack[self.stack_pointer] = self.program_counter + 2;
             self.program_counter = addr;
             self.stack_pointer += 1;
       }

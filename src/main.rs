@@ -8,6 +8,9 @@ use display::Display;
 
 fn main() {
 
+      const CPU_FREQUENCY: f32 = 500.0; // Hz
+      const DRAW_FREQUENCY: f32 = 60.0; // Hz
+
       let rom = match std::env::args().nth(1) {
             Some(v) => v,
             None => panic!("Need ROM to load!")
@@ -24,7 +27,7 @@ fn main() {
             let now = time::PreciseTime::now();
 
             let delta_cpu = begin_cpu.to(now);
-            if delta_cpu.num_milliseconds() >= 2 {
+            if delta_cpu.num_milliseconds() >= (1000.0 / CPU_FREQUENCY).round() as i64 {
                   begin_cpu = now.clone();
 
                   if chip.running {
@@ -33,7 +36,7 @@ fn main() {
             }
 
             let delta_display = begin_display.to(now);
-            if delta_display.num_milliseconds() > 16 {
+            if delta_display.num_milliseconds() >= (1000.0 / DRAW_FREQUENCY).round() as i64 {
                   begin_display = now.clone();
 
                   display.update(&mut chip);
