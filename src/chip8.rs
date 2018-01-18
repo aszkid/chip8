@@ -378,16 +378,18 @@ impl Chip {
             self.set_flag(borrow);
             self.program_counter += 2;
       }
+      // 8xy6 - SHR Vx {, Vy}
       fn op_shr(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
 
             let val = self.load(ry);
             // extract lsb
-            self.set_flag(val & 0x0001);
+            self.set_flag(val & 0x1);
             self.store(rx, val >> 1);
             self.program_counter += 2;
       }
+      // 8xy7 - SUBN Vx, Vy
       fn op_subn_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -397,6 +399,7 @@ impl Chip {
             self.set_flag(borrow);
             self.program_counter += 2;
       }
+      // 8xyE - SHL Vx {, Vy}
       fn op_shl(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -407,14 +410,17 @@ impl Chip {
             self.store(rx, val << 1);
             self.program_counter += 2;
       }
+      // Annn - LD I, addr
       fn op_load_i_imm(&mut self, instruction: u16) {
             let addr = instruction & 0x0FFF;
             self.index = addr;
             self.program_counter += 2;
       }
+      // Bnnn - JP V0, addr
       fn op_jump_imm_plus(&mut self, instruction: u16) {
             self.program_counter = (instruction & 0x0FFF) + self.load(0x0) as u16;
       }
+      // Cxkk - RND Vx, byte
       fn op_rand(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let mask = (instruction & 0x00FF) as u8;
@@ -422,6 +428,7 @@ impl Chip {
             self.store(rx, rand::random::<u8>() & mask);
             self.program_counter += 2;
       }
+      // Dxyn - DRW Vx, Vy, nibble
       fn op_draw(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
@@ -523,39 +530,42 @@ impl Chip {
 
             self.program_counter += 2;
       }
+      // Ex9E - SKP Vx
       fn op_skp(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let val = (self.load(rx) & 0x0F) as usize;
+            let val = (self.load(rx) & 0xF) as usize;
             
             if self.keypad[val] == true {
                   self.program_counter += 2;
             }
-
             self.program_counter += 2;
       }
+      // ExA1 - SKNP Vx
       fn op_sknp(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let val = (self.load(rx) & 0x0F) as usize;
+            let val = (self.load(rx) & 0xF) as usize;
             
-            if self.keypad[val] != true {
+            if self.keypad[val] == false {
                   self.program_counter += 2;
             }
-
             self.program_counter += 2;
       }
+      // Fx15 - LD DT, Vx
       fn op_load_dt_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             self.delay_timer = self.load(rx);
 
             self.program_counter += 2;
       }
+      // Fx07 - LD Vx, DT
       fn op_load_reg_dt(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let val = self.delay_timer;
+            let val = self.delay_timer.clone();
             self.store(rx, val);
 
             self.program_counter += 2;
       }
+      // Fx33 - LD B, Vx
       fn op_load_bcd_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let val = self.load(rx) as f32;
@@ -570,14 +580,16 @@ impl Chip {
 
             self.program_counter += 2;
       }
+      // Fx55 - LD [I], Vx
       fn op_store_regs_i(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             for j in 0..(rx+1) {
-                  self.memory[self.index as usize +j] = self.load(j);
+                  self.memory[self.index as usize + j] = self.load(j);
             }
 
             self.program_counter += 2;
       }
+      // Fx65 - LD Vx, [I]
       fn op_load_regs_i(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             for j in 0..(rx+1) {
