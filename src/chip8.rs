@@ -47,7 +47,7 @@ fn add_carry(a: u8, b: u8) -> (u8, u8) {
       let carry = res & 0xFF00;
 
       if carry > 0 {
-            ((res % 256) as u8, 0x1)
+            (res as u8, 0x1)
       } else {
             (res as u8, 0x0)
       }
@@ -368,6 +368,7 @@ impl Chip {
             self.set_flag(carry);
             self.program_counter += 2;
       }
+      // 8xy5 - SUB Vx, Vy
       fn op_sub_reg_reg(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
             let ry = ((instruction & 0x00F0) >> 4) as usize;
