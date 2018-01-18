@@ -4,11 +4,14 @@ extern crate time;
 use chip8;
 use display::Display;
 
-const WINDOW_W: usize = 800;
-const WINDOW_H: usize = 400;
+const WINDOW_W: usize = 1200;
+const WINDOW_H: usize = 600;
 const WINDOW_LEN: usize = WINDOW_W * WINDOW_H; 
 
 use self::sfml::window::Key;
+use self::sfml::system::Vector2f;
+
+
 const KEY_BINDINGS: [(u8, Key); 16] = [
       (0x1, Key::Num1),
       (0x2, Key::Num2),
@@ -41,6 +44,7 @@ pub struct DisplaySFML {
       window: sfml::graphics::RenderWindow,
       texture_data: [u8; chip8::DISPLAY_SIZE * 4],
       texture: sfml::graphics::Texture,
+      font: sfml::graphics::Font
 }
 
 impl DisplaySFML {
@@ -58,7 +62,8 @@ impl DisplaySFML {
             let mut disp = DisplaySFML {
                   window,
                   texture_data: [0; chip8::DISPLAY_SIZE * 4],
-                  texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap()
+                  texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap(),
+                  font: sfml::graphics::Font::from_file("res/Hack-Regular.ttf").unwrap()
             };
             disp.texture.set_repeated(false);
             return disp;
@@ -101,7 +106,16 @@ impl Display for DisplaySFML {
             }
             self.texture.update_from_pixels(&self.texture_data, chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32, 0, 0);
             let mut sprite = sfml::graphics::Sprite::with_texture(&self.texture);
-            sprite.set_scale(sfml::system::Vector2f::new(WINDOW_W as f32 / chip8::DISPLAY_W as f32, WINDOW_H as f32 / chip8::DISPLAY_H as f32));
+            //sprite.set_scale(sfml::system::Vector2f::new(WINDOW_W as f32 / chip8::DISPLAY_W as f32, WINDOW_H as f32 / chip8::DISPLAY_H as f32));
+            sprite.set_scale(Vector2f::new(12.5, 12.5));
+
+            // debugging
+            let string = String::from("Hello world");
+            let mut text = sfml::graphics::Text::new(&string, &self.font, 12);
+            text.set_fill_color(&sfml::graphics::Color::WHITE);
+            text.set_position(Vector2f::new(805.0, 0.0));
+
+            self.window.draw(&text);
             self.window.draw(&sprite);
             self.window.display();
       }
