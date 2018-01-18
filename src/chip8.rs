@@ -370,11 +370,11 @@ impl Chip {
             self.program_counter += 2;
       }
       // 8xy6 - SHR Vx {, Vy}
+      // SHOULD ADD TOGGLE BETWEEN REAL INSTRUCTION AND FAKE:
+      // --> https://www.reddit.com/r/EmuDev/comments/72dunw/chip8_8xy6_help/
       fn op_shr(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let ry = ((instruction & 0x00F0) >> 4) as usize;
-
-            let val = self.load(ry);
+            let val = self.load(rx);
             // extract lsb
             self.set_flag(val & 0x1);
             self.store(rx, val >> 1);
@@ -393,9 +393,7 @@ impl Chip {
       // 8xyE - SHL Vx {, Vy}
       fn op_shl(&mut self, instruction: u16) {
             let rx = ((instruction & 0x0F00) >> 8) as usize;
-            let ry = ((instruction & 0x00F0) >> 4) as usize;
-
-            let val = self.load(ry);
+            let val = self.load(rx);
             // extract msb
             self.set_flag(val >> 7);
             self.store(rx, val << 1);
