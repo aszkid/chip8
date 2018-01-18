@@ -46,21 +46,12 @@ fn add_carry(a: u8, b: u8) -> (u8, u8) {
       let res = (a as u16) + (b as u16);
       let carry = res & 0xFF00;
 
-      if carry > 0 {
-            (res as u8, 0x1)
-      } else {
-            (res as u8, 0x0)
-      }
+      (a.wrapping_add(b), if carry > 0 {0x1} else {0x0})
 }
 fn sub_borrow(a: u8, b: u8) -> (u8, u8) {
       let not_borrow = a > b;
-      let res = if a >= b {
-            a - b
-      } else {
-            0xFF - (b - a) + 1
-      };
 
-      (res, if not_borrow {0x1} else {0x0})
+      (a.wrapping_sub(b), if not_borrow {0x1} else {0x0})
 }
 
 pub struct Chip {
