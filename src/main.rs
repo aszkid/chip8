@@ -8,17 +8,16 @@ mod display_sfml;
 use display::Display;
 
 const BEEP_SAMPLE_RATE: u32 = 44100;
+const BEEP_FREQUENCY: f32 = 1000.0;
 fn generate_beep() -> Vec<i16> {
       const SAMPLES: usize = BEEP_SAMPLE_RATE as usize / 2;
       let mut data: Vec<i16> = Vec::new();
       data.resize(SAMPLES, 0);
 
-      // generate half a second of a square wave
-      const f: f32 = 174.0; // Hz
+      // generate half a second of a sine wave
       for i in 0..SAMPLES {
             let t = i as f32 / BEEP_SAMPLE_RATE as f32;
-            data[i] = ((f * t).sin() * 32767.0).round() as i16;
-            println!("data[{}] = {}", i, data[i]);
+            data[i] = ((BEEP_FREQUENCY * t * 2.0 * 3.1415).sin() * 32767.0).round() as i16;
       }
 
       data
@@ -41,7 +40,7 @@ fn main() {
             1, // channel_count
             BEEP_SAMPLE_RATE // sample_rate
       ).unwrap();
-      println!("Duration: {}", beep_buffer.duration().as_seconds());
+      beep_buffer.save_to_file("res/test.wav");
       let mut display = display_sfml::DisplaySFML::new(&beep_buffer);
       display.init();
 

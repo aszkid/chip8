@@ -70,8 +70,7 @@ impl<'t> DisplaySFML<'t> {
       
       pub fn init(&mut self) {
             self.texture.set_repeated(false);
-            //self.beep.set_looping(true);
-            self.beep.play();
+            self.beep.set_looping(true);
       }
 }
 
@@ -94,6 +93,16 @@ impl<'t> Display for DisplaySFML<'t> {
             // Update keypad state
             for pair in KEY_BINDINGS.iter() {
                   chip.keypad[pair.0 as usize] = pair.1.is_pressed();
+            }
+
+
+            // Play / stop beep
+            if chip.sound_timer > 0 {
+                  if self.beep.status() != sfml::audio::SoundStatus::Playing {
+                        self.beep.play();
+                  }
+            } else {
+                  self.beep.stop();
             }
       }
       fn draw(&mut self, chip: &chip8::Chip) {
