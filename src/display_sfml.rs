@@ -10,7 +10,8 @@ const WINDOW_LEN: usize = WINDOW_W * WINDOW_H;
 
 use self::sfml::window::Key;
 use self::sfml::system::Vector2f;
-
+use self::sfml::audio::{Sound, SoundBuffer};
+use self::sfml::graphics::Font;
 
 const KEY_BINDINGS: [(u8, Key); 16] = [
       (0x1, Key::Num1),
@@ -40,37 +41,41 @@ fn key_local_to_chip(k: Key) -> Option<u8> {
       None
 }
 
-pub struct DisplaySFML {
+pub struct DisplaySFML<'t> {
       window: sfml::graphics::RenderWindow,
       texture_data: [u8; chip8::DISPLAY_SIZE * 4],
       texture: sfml::graphics::Texture,
-      font: sfml::graphics::Font
+      font: Font,
+      beep: Sound<'t>
 }
 
-impl DisplaySFML {
-      pub fn new() -> DisplaySFML {
+impl<'t> DisplaySFML<'t> {
+
+      pub fn new(beep_buffer: &'t SoundBuffer) -> DisplaySFML<'t> {
             use self::sfml::window::{Event, Style};
             use self::sfml::graphics::RenderWindow;
-
-            let mut window = RenderWindow::new(
-                  (WINDOW_W as u32, WINDOW_H as u32),
-                  "CHIP-8",
-                  Style::CLOSE,
-                  &Default::default()
-            );
-
-            let mut disp = DisplaySFML {
-                  window,
+            DisplaySFML {
+                  window: RenderWindow::new(
+                        (WINDOW_W as u32, WINDOW_H as u32),
+                        "CHIP-8",
+                        Style::CLOSE,
+                        &Default::default()
+                  ),
                   texture_data: [0; chip8::DISPLAY_SIZE * 4],
                   texture: sfml::graphics::Texture::new(chip8::DISPLAY_W as u32, chip8::DISPLAY_H as u32).unwrap(),
-                  font: sfml::graphics::Font::from_file("res/Hack-Regular.ttf").unwrap()
-            };
-            disp.texture.set_repeated(false);
-            return disp;
+                  font: sfml::graphics::Font::from_file("res/Hack-Regular.ttf").unwrap(),
+                  beep: Sound::with_buffer(beep_buffer)
+            }
+      }
+      
+      pub fn init(&mut self) {
+            self.texture.set_repeated(false);
+            //self.beep.set_looping(true);
+            self.beep.play();
       }
 }
 
-impl Display for DisplaySFML {
+impl<'t> Display for DisplaySFML<'t> {
       fn update(&mut self, chip: &mut chip8::Chip) {
             use self::sfml::window::{Event, Key};
 

@@ -141,7 +141,7 @@ impl Chip {
                   }
             }
 
-            println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
+            //println!("Dispatching instruction {:x} at PC = {} (I = {})", instruction, self.program_counter, self.index);
             match instruction & 0xF000 {
                   0x0000 => {
                         match instruction {
